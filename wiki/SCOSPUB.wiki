@@ -11,3 +11,5 @@ Topics:
   * [Design]
   * SecurityIssues
   * DesignGuidelines
+
+SCOSPUB is an acronym for Static Checks for Open Source Projects Using Boinc.
