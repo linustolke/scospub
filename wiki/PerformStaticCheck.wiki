@@ -1,12 +1,14 @@
+#summary Use Case
 #labels Phase-Requirements
+
 = Perform a static check =
 
-The Check Host does this continously.
+The CheckHost does this continously.
 This is taken care of by the BOINC client and the application.
-  # Download a work package.
+  # Download a work package from the CentralHost.
   # Start the work package:
-    # Download the appropriate tool (provided as a file from the Check Host)
+    # Download the appropriate tool (provided as a file from the CheckHost)
     # Download the source to test (downloaded directly from the Open Source repository)
   # Run the tool
   # Upload the result.
-  # The Central Host enters the result in a database.
+  # The CentralHost enters the result in a database.
