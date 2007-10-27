@@ -1,6 +1,11 @@
 #summary The actors involved in the project
 #labels Phase-Requirements
 
+  * OpenSourceDeveloper
+  * CheckHost
+  * OpenSourceProjectAdministrator
+  * CentralHost
+
 = Open Source Developer =
 
 The developer is a person developing or looking at an Open Source Project.
