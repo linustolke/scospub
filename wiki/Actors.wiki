@@ -1,4 +1,5 @@
-#summary Define the actors involved in the project
+#summary The actors involved in the project
+#labels Phase-Requirements
 
 = Open Source Developer =
 
