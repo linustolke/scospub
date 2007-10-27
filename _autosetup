@@ -1,7 +1,7 @@
 {
 aclocal &&
 autoheader &&
-automake &&
+automake --add-missing &&
 autoconf 
 } || {
     echo "Something failed .... please check error-message and re-run when fixed."
