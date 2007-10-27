@@ -1,0 +1,13 @@
+{
+aclocal &&
+autoheader &&
+automake &&
+autoconf 
+} || {
+    echo "Something failed .... please check error-message and re-run when fixed."
+    echo "exiting..."
+    exit 1
+}
+
+echo "Now run ./configure --with-boinc=/where/boinc/is/built"
+echo " -C           to enable caching"
