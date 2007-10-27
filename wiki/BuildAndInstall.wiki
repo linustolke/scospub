@@ -1,0 +1,43 @@
+#summary Instructions on how to build and install the product
+
+= Step by Step instruction =
+
+  # Install the dependencies for boinc (server part from http://boinc.berkeley.edu/trac/wiki/SoftwarePrereqsUnix)
+  # Create a user for this (_scospub_)
+  # Change directory to a build directory in the user home directory
+{{{
+su scospub
+cd
+mkdir svn
+cd svn
+}}}
+  # Check out the boinc projects:
+{{{
+svn co http://boinc.berkeley.edu/svn/trunk/boinc boinc
+svn co http://boinc.berkeley.edu/svn/trunk/boinc boinc_samples
+}}}
+  # Build the boinc project, see http://boinc.berkeley.edu/trac/wiki/BuildSystem
+  # Check out this project:
+{{{
+svn co http://scospub.googlecode.com/svn/trunk scospub
+}}}
+  # Configure the project:
+{{{
+cd scospub
+_autosetup
+./configure
+make
+make install
+}}}
+
+= Prerequisites =
+
+Sofar no prerequisites except the ones already used by boinc are identified.
+
+= Notes =
+
+Linus is attempting this on a debian host.
+
+= Downloads =
+
+There are no provided downloads. You need to work from the repository.
