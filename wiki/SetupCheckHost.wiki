@@ -1,4 +1,6 @@
+#summary Use Case
 #labels Phase-Requirements
+
 = Set up a CheckHost =
 
 The CheckHost Administrator does the following:
