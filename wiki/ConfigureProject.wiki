@@ -1,7 +1,7 @@
 #labels Phase-Requirements
 = Configure a project =
 
-The Open Source Project Administrator
+The OpenSourceProjectAdministrator
 enters the web page of the system and configures the project.
 
 The configuration includes:
