@@ -1,0 +1,39 @@
+#summary An overview of the design
+
+= Parts =
+
+There are two essential parts of the project,
+differing in how they are deployed and because of that they have
+completely separate requirements.
+  * Server side tools
+  * Application
+
+== Server side tools ==
+
+The Server side tools run, together with the BOINC server on the CentralHost to
+  * Prepare work packages
+  * Accept and take care of changes in configuration, new projects
+  * Handle result and present it
+
+Essentially these are deployed only once.
+
+== Application ==
+
+The Application is a BOINC application.
+It is downloaded from the server and run on each ClientHost.
+
+These could exist for several combinations of OS and CPU according to the BOINC
+handling of different system types.
+
+The requirements are:
+  * Simple, straight-forward.
+  * Linked with the BOINC library and implementing the BOINC API.
+
+= Other ideas =
+
+Since we are to use a lot of exterior tools to do this and these tool
+do probably not fit with the BOINC API save and restore state and 
+freeze execution,
+we should strive to create as small work packages as possible.
+We could explore having Job Control to allow pausing and restarting jobs
+even though it is a rather clumsy way of doing it. 
