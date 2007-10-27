@@ -1,11 +1,8 @@
 #summary An Actor
 #labels Phase-Requirements
 
-= Check Host =
+= Central Host =
 
-A Check Host is one of the machines doing the work.
-It is set up to run the BOINC client application that
-regularly contacts the Central Host,
-downloads work to be done,
-do the work, and
-upload the result.
+This is the host running the application (together with a BOINC server installation).
+It is assumed that only one such host is needed world-wide but there is nothing
+that forbids setting up several networks.
