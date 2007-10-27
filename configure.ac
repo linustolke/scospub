@@ -18,6 +18,12 @@ AC_SUBST(BOINC_LIB_DIR, [$with_boinc/lib])
 # Checks for programs.
 AC_PROG_CXX
 
+[
+if [ $GXX = yes ]; then
+  ln -s `g++ -print-file-name=libstdc++.a` application
+fi
+]
+
 # Checks for libraries.
 
 # Checks for header files.
