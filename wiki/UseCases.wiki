@@ -1,5 +1,10 @@
 #summary Use Cases
 
+  * ConfigureProject
+  * SetupCheckHost
+  * PerformStaticCheck
+  * ExamineResult
+
 = Configure a project =
 
 The Open Source Project Administrator
