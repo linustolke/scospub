@@ -1,42 +1,7 @@
 #summary Use Cases
+#labels Phase-Requirements
 
   * ConfigureProject
   * SetupCheckHost
   * PerformStaticCheck
   * ExamineResult
-
-= Configure a project =
-
-The Open Source Project Administrator
-enters the web page of the system and configures the project.
-
-The configuration includes:
-  * Name of the project
-  * Repository location
-  * Selection of tools to run and if available, how they are to be configured.
-
-= Set up a Check Host =
-
-The Check Host Administrator does the following:
-  # Install and configure the BOINC client.
-  # Add the Central Host URL to the BOINC client as a project.
-  # Optionally he can also select projects to run otherwise all projects are candidates.
-
-If the Check Host Administrator no longer wants to use his host for this,
-he detaches the project or uninstalls the BOINC client.
-
-= Perform a static check =
-
-The Check Host does this continously.
-This is taken care of by the BOINC client and the application.
-  # Download a work package.
-  # Start the work package:
-    # Download the appropriate tool (provided as a file from the Check Host)
-    # Download the source to test (downloaded directly from the Open Source repository)
-  # Run the tool
-  # Upload the result.
-  # The Central Host enters the result in a database.
-
-= Examine the result =
-
-A web page on the Central Host is shown with the result from the contents of the database.
