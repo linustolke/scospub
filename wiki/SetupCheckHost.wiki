@@ -1,0 +1,9 @@
+= Set up a Check Host =
+
+The Check Host Administrator does the following:
+  # Install and configure the BOINC client.
+  # Add the Central Host URL to the BOINC client as a project.
+  # Optionally he can also select projects to run otherwise all projects are candidates.
+
+If the Check Host Administrator no longer wants to use his host for this,
+he detaches the project or uninstalls the BOINC client.
