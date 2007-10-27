@@ -1,0 +1,14 @@
+#summary About the project
+#labels Phase-Requirements
+
+= Introduction =
+
+The purpose of this project is to take care of the software development part in setting up a world-wide site for running static checks on a lot of open source projects. There isn't such a site yet but it is hoped that some big actor
+
+= Details =
+
+Topics:
+* Actors and Use Cases
+* Design
+* Security issues
+* Design Guidelines
