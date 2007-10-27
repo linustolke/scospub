@@ -1,0 +1,7 @@
+#summary Design Guidelines for the SCOSPUB project
+
+= General Ideas =
+
+Use the automake setup similar to that of the BOINC project.
+
+Create scripts to do installations and updates.
