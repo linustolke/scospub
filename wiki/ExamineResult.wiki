@@ -1,4 +1,6 @@
+#summary Use Case
 #labels Phase-Requirements
+
 = Examine the result =
 
-A web page on the Central Host is shown with the result from the contents of the database.
+A web page on the CentralHost is shown with the result from the contents of the database.
