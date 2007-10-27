@@ -6,11 +6,6 @@
   * OpenSourceProjectAdministrator
   * CentralHost
 
-= Open Source Developer =
-
-The developer is a person developing or looking at an Open Source Project.
-He normally accesses the Result Pages at the Central Host to look at the result
-of the static checks.
 
 = Check Host =
 
@@ -20,16 +15,3 @@ regularly contacts the Central Host,
 downloads work to be done,
 do the work, and
 upload the result.
-
-= Open Source Project Administrator =
-
-The Open Source Project Administrator uses
-the configuration web pages on the Central Host
-to specify where the project resides and what checks that
-are relevant for that project.
-
-= Central Host =
-
-This is the host running the application (together with a BOINC server installation).
-It is assumed that only one such host is needed world-wide but there is nothing
-that forbids setting up several networks.
