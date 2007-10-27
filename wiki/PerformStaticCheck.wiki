@@ -1,3 +1,4 @@
+#labels Phase-Requirements
 = Perform a static check =
 
 The Check Host does this continously.
