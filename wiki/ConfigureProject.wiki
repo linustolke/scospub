@@ -1,0 +1,9 @@
+= Configure a project =
+
+The Open Source Project Administrator
+enters the web page of the system and configures the project.
+
+The configuration includes:
+  * Name of the project
+  * Repository location
+  * Selection of tools to run and if available, how they are to be configured.
