@@ -1,7 +1,16 @@
-#summary Use Cases
+#summary Actors and Use Cases
 #labels Phase-Requirements
+
+= Use Cases =
 
   * ConfigureProject
   * SetupCheckHost
   * PerformStaticCheck
   * ExamineResult
+
+= Actors =
+
+  * OpenSourceDeveloper
+  * CheckHost
+  * OpenSourceProjectAdministrator
+  * CentralHost
