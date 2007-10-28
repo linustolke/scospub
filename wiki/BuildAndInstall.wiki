@@ -1,4 +1,5 @@
 #summary Instructions on how to build and install the product
+#labels Phase-Deploy
 
 = Step by Step instruction =
 
@@ -37,6 +38,10 @@ Sofar no prerequisites except the ones already used by boinc are identified.
 = Notes =
 
 Linus is attempting this on a debian host.
+
+== Notes on configuring BOINC ==
+
+locality_scheduling is a good idea to enable.
 
 = Downloads =
 
