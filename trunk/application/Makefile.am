@@ -1,4 +1,4 @@
-bin_PROGRAMS = wrapper
+noinst_PROGRAMS = wrapper
 wrapper_SOURCES = wrapper.C
 
 CXXFLAGS = -I$(BOINC_DIR) \

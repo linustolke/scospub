@@ -1,18 +1,44 @@
 AC_INIT([scospub], [0.1], [ltolke@gmail.com])
 AM_INIT_AUTOMAKE([-Wall foreign])
 
-AC_ARG_WITH(boinc, [  --with-boinc=/where/built where the boinc library is built], [], [
-echo ERROR: Boinc path must be given. 1>&2
-exit 1
-])
-
-AC_CONFIG_SRCDIR([application/wrapper.C])
-AC_CONFIG_HEADER([config.h])
+AC_ARG_WITH(boinc,
+            AC_HELP_STRING([--with-boinc=/where/built],
+	                   [where the boinc library is built]),
+            [
+              if test "$withval" = yes
+              then
+                AC_MSG_ERROR(Boinc source must be explicitly given)
+              elif test ! -r $withval/api/libboinc_api.a
+              then
+                AC_MSG_ERROR($withval does not point to built boinc project) 
+              fi
+            ],
+            AC_MSG_ERROR(Boinc path must be given.)
+           )
 
 AC_SUBST(BOINC_DIR, [$with_boinc])
 AC_SUBST(BOINC_API_DIR, [$with_boinc/api])
 AC_SUBST(BOINC_LIB_DIR, [$with_boinc/lib])
 
+AC_ARG_WITH(project,
+            AC_HELP_STRING([--with-project=/where/project],
+                           [where the project to install in is]),
+            [
+              if test "$withval" = yes
+              then
+                AC_MSG_ERROR(Project must be explicitly given)
+              elif test ! -r $withval/html/inc/db.inc
+              then
+                AC_MSG_ERROR($withval does not point to an installed boinc project) 
+              fi
+            ],
+            AC_MSG_ERROR(Project path must be given.)
+           )
+
+AC_SUBST(PROJECT_DIR, [$with_project])
+
+AC_CONFIG_SRCDIR([application/wrapper.C])
+AC_CONFIG_HEADER([config.h])
 
 
 # Checks for programs.
@@ -40,5 +66,11 @@ AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 
 
-AC_CONFIG_FILES(Makefile application/Makefile)
+AC_CONFIG_FILES(Makefile
+	        application/Makefile
+                html/Makefile
+                html/languages/Makefile
+                html/languages/project_specific_translations/Makefile
+		html/scosconf/Makefile
+		html/scospres/Makefile)
 AC_OUTPUT
