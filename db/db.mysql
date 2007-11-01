@@ -1,0 +1,11 @@
+create table scos_project (
+    id INTEGER NOT NULL AUTO_INCREMENT,
+    UNIQUE id,
+    name STRING,
+    UNIQUE name,
+    active Bool,
+
+    user_friendly_name STRING,
+
+    
+}

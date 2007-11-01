@@ -1,0 +1,33 @@
+##########################################
+# Language: English (International)
+# FileID  : $Id: sample_en.po 9842 2006-04-11 19:54:27Z boincadm $
+# Author  : Linus Tolke
+# Email   : jbk@visualgroup.dk
+##########################################
+# For more information please see:
+# http://boinc.berkeley.edu/translate.html
+##########################################
+
+msgid "INFO_ABOUT_THIS_FILE"
+msgstr "This file is used for translations for SCOSPUB pages."
+
+# Prefixes are SCOSPR_ for result presentation pages (in html/scospres)
+# Prefixes are SCOSPC_ for configuration pages (in html/scosconf)
+
+msgid "SCOSP_TITLE"
+msgstr "Presentation of the results"
+
+msgid "SCOSP_DESCRIPTION"
+msgstr "$PROJECT provides information for the following open source development projects."
+
+msgid "SCOSP_THEPROJECT"
+msgstr "The project"
+
+msgid "SCOSP_NUM_REPORT"
+msgstr "# reports"
+
+msgid "SCOSP_LAST_REPORT"
+msgstr "Last updated"
+
+msgid "SCOSP_NO_RESULTS"
+msgstr "No results yet"
