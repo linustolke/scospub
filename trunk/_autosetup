@@ -9,5 +9,5 @@ autoconf
     exit 1
 }
 
-echo "Now run ./configure --with-boinc=/where/boinc/is/built"
-echo " -C           to enable caching"
+echo "Now run a command like:"
+echo "    ./configure -C --with-boinc=/where/boinc/is/built"

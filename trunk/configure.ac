@@ -20,7 +20,7 @@ AC_PROG_CXX
 
 [
 if [ $GXX = yes ]; then
-  ln -s `g++ -print-file-name=libstdc++.a` application
+  ln -sf `g++ -print-file-name=libstdc++.a` application
 fi
 ]
 
