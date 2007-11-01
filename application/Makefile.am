@@ -1,4 +1,8 @@
 noinst_PROGRAMS = wrapper
+install-data-local:
+	mkdir -p $(PROJECT_DIR)/apps/wrapper
+	cp wrapper $(PROJECT_DIR)/apps/wrapper/wrapper_$(VERSION)_$(host)
+
 wrapper_SOURCES = wrapper.C
 
 CXXFLAGS = -I$(BOINC_DIR) \

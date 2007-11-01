@@ -40,6 +40,7 @@ AC_SUBST(PROJECT_DIR, [$with_project])
 AC_CONFIG_SRCDIR([application/wrapper.C])
 AC_CONFIG_HEADER([config.h])
 
+AC_CANONICAL_HOST()
 
 # Checks for programs.
 AC_PROG_CXX
