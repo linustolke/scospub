@@ -1,0 +1,1 @@
+SUBDIRS = project_specific_translations
