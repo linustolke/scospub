@@ -13,9 +13,24 @@ completely separate requirements.
 The Server side tools run, together with the BOINC server on the CentralHost to
   * Prepare work packages
   * Accept and take care of changes in configuration, new projects
-  * Handle result and present it
+  * Handle result from application
+  * Present the result
+  * Do configuration of projects
 
 Essentially these are deployed only once.
+
+The presentation of results and the configuration of projects uses
+the boinc server web pages.
+Including:
+  * Base url
+  * Web server configuration
+  * php include files
+  * Database (new tables for the scospub-level results)
+
+The presentation of results is in the html/scospres
+both in the scospub project and in the installed
+boinc server web pages.
+The project configuration files are in html/scosconf.
 
 == Application ==
 
@@ -31,9 +46,9 @@ The requirements are:
 
 = Other ideas =
 
-Since we are to use a lot of exterior tools to do this and these tool
-do probably not fit with the BOINC API save and restore state and 
-freeze execution,
-we should strive to create as small work packages as possible.
-We could explore having Job Control to allow pausing and restarting jobs
-even though it is a rather clumsy way of doing it. 
+The tool wrapper, from boinc_samples, handles a list of commands,
+saving and restoring state between them, and job control.
+That would be a good starting point since
+we are to use a lot of exterior tools.
+
+We should strive to create as small work packages as possible.

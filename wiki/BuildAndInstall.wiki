@@ -26,7 +26,11 @@ svn co http://scospub.googlecode.com/svn/trunk scospub
 {{{
 cd scospub
 _autosetup
-./configure
+}}}
+  # Install the boinc server part.
+  # Configure the project:
+{{{
+./configure -C --with-boinc=`pwd`/../boinc
 make
 make install
 }}}
@@ -37,11 +41,13 @@ Sofar no prerequisites except the ones already used by boinc are identified.
 
 = Notes =
 
-Linus is attempting this on a debian host.
+Linus is working on a debian host so there might be debian-specific stuff
+in the project. If you find anything, lets fix it.
 
 == Notes on configuring BOINC ==
 
-locality_scheduling is a good idea to enable.
+locality_scheduling is a good idea to enable for the project.
+The big files would then be the static check tools.
 
 = Downloads =
 
