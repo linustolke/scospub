@@ -31,3 +31,22 @@ msgstr "Last updated"
 
 msgid "SCOSP_NO_RESULTS"
 msgstr "No results yet"
+
+msgid "SCOSP_RESULT_DESCRIPTION"
+msgstr "Result from project:"
+
+msgid "SCOSP_RESULT_NO_PROJ"
+msgstr "The project must be given."
+
+msgid "SCOSP_ALL_PROJECTS"
+msgstr "All projects."
+
+msgid "SCOSP_TOOL"
+msgstr "The tool"
+
+msgid "SCOSP_VERSION"
+msgstr "Version"
+
+msgid "SCOSP_RESULT"
+msgstr "Result"
+

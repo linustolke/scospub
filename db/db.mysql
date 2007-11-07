@@ -6,6 +6,19 @@ create table scos_project (
     active Bool,
 
     user_friendly_name STRING,
+}
 
-    
+create table scos_tools {
+    id INTEGER NOT NULL AUTO_INCREMENT,
+    name STRING,
+    active Bool
+}
+
+create table scos_results {
+    id INTEGER NOT NULL AUTO_INCREMENT,
+    when DATETIME,
+    version INTEGER, # We are assuming Subversion here.
+    tool INTEGER,
+    foreign key tool references scos_tools (id) on delete cascade,
+    result INTEGER
 }
