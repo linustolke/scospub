@@ -30,6 +30,7 @@ $result = mysql_query("select * from scos_project where active=1");
 while ($proj = mysql_fetch_object($result)) {
     if ($xml) {
         echo "  <scos_project>\n";
+        echo "    <id>$proj->id</id>\n";
         echo "    <name>$proj->name</name>\n";
     } else {
         echo "
@@ -40,7 +41,11 @@ while ($proj = mysql_fetch_object($result)) {
 	$r2 = mysql_query("select count(*) as num from scos_result where projectid=$proj->id");
 	if ($av = mysql_fetch_object($r2)) {
 	   echo "
-		  <td>$av->num</td>
+		  <td>
+                    <a href='results.php?projid=$proj->id'>
+                      $av->num
+                    </a>
+                  </td>
 	   ";
 	} else {
 	   echo "
@@ -73,6 +78,7 @@ while ($proj = mysql_fetch_object($result)) {
     }
 }
 mysql_free_result($result);
+
 if ($xml) {
     echo "</scos_projects>\n";
 } else {
