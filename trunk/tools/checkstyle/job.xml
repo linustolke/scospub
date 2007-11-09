@@ -3,12 +3,12 @@
     <application>svn</application>
     <stdin_filename>null</stdin_filename>
     <stdout_filename>svnout</stdout_filename>
-    <command_line>co http://argouml-cpp.tigris.org/svn/trunk/src /tmp/scospub/acpp/trunk/src</command_line>
+    <command_line>co http://argouml-cpp.tigris.org/svn/trunk/src /tmp/scospub/acpp/trunk/src -username guest -password ''</command_line>
   </task>
   <task>
     <application>java</application>
     <stdin_filename>null</stdin_filename>
     <stdout_filename>javaout</stdout_filename>
-    <command_line>-cp checkstyle.jar org.checkstyle.main.Main /tmp/scospub/acpp/trunk/src</command_line>
+    <command_line>-cp checkstyle-all-4.3.jar com.puppycrawl.tools.checkstyle.Main /tmp/scospub/acpp/trunk/src</command_line>
   </task>
 </job_desc>

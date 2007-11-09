@@ -1,3 +1,4 @@
+# Because of BOINC the version number must be n.m where m<100
 AC_INIT([scospub], [0.1], [ltolke@gmail.com])
 AM_INIT_AUTOMAKE([-Wall foreign])
 
@@ -21,8 +22,8 @@ AC_SUBST(BOINC_API_DIR, [$with_boinc/api])
 AC_SUBST(BOINC_LIB_DIR, [$with_boinc/lib])
 
 AC_ARG_WITH(project,
-            AC_HELP_STRING([--with-project=/where/project],
-                           [where the project to install in is]),
+            AC_HELP_STRING([--with-project=/where/projects/project],
+                           [where the project to install in is located]),
             [
               if test "$withval" = yes
               then
@@ -36,6 +37,7 @@ AC_ARG_WITH(project,
            )
 
 AC_SUBST(PROJECT_DIR, [$with_project])
+
 
 AC_CONFIG_SRCDIR([application/wrapper.C])
 AC_CONFIG_HEADER([config.h])
@@ -69,6 +71,8 @@ AC_CHECK_FUNCS([memset])
 
 AC_CONFIG_FILES(Makefile
 	        application/Makefile
+                tools/Makefile
+		tools/checkstyle/Makefile
                 html/Makefile
                 html/languages/Makefile
                 html/languages/project_specific_translations/Makefile
