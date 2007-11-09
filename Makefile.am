@@ -1,1 +1,1 @@
-SUBDIRS = application html
+SUBDIRS = application html tools

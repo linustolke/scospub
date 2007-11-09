@@ -10,4 +10,4 @@ autoconf
 }
 
 echo "Now run a command like:"
-echo "    ./configure -C --with-boinc=/where/boinc/is/built"
+echo "    ./configure -C --with-boinc=/where/boinc/is/built --with-project=/where/ever/projects/yourserver"
