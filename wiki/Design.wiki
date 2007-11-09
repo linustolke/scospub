@@ -66,13 +66,31 @@ according to its configuration.
 Initially we will go with alternative 2.
 This is based on the Boinc documentation.
 
-In the projects/<WHATEVER>/apps directory:
+In the projects/<WHATEVER> directory on the CentralHost
+the following files are installed by make in the scospub project:
 
-  apps/<OSPROJ>/tool_version_platform/wrapper_version_platform
-  apps/<OSPROJ>/tool_version_platform/tool=tool_version_platform
-  apps/<OSPROJ>/tool_version_platform/job.xml=job_version.xml
+  scospub/<TOOL>/<TOOL>_platform/wrapper_version_platform
+  scospub/<TOOL>/<TOOL>_platform/<TOOL>=<TOOL>_version_platform
+  scospub/<TOOL>/<TOOL>_platform/job.xml=job_version.xml
+  scospub/<TOOL>/<TOOL>_wu
+  scospub/<TOOL>/<TOOL>_result
 
-In the slot directory:
+The list of tools is defined by the scospub source.
+
+The files from projects/<WHATEVER>/scospub are copied
+by a special tool to
+the projects/<WHATEVER> directory on the CentralHost:
+
+  apps/<OSPROJ>/<TOOL>_version_platform/wrapper_version_platform
+  apps/<OSPROJ>/<TOOL>_version_platform/<TOOL>=<TOOL>_version_platform
+  apps/<OSPROJ>/<TOOL>_version_platform/job.xml=job_version.xml
+  templates/<TOOL>_wu
+  templates/<TOOL>_result
+
+The list of osproj is defined by the [OpenSourceProjectAdministator]s
+using the web interface. These files are installed automatically.
+
+In the slot directory on the CheckHost:
   job.xml
   stdin
   stdout
@@ -85,8 +103,10 @@ The layout is:
   /tmp/scospub/<OSPROJ>/repos/<configured paths>
 
 All instances of applications from the same <OSPROJ> share the same
-directory so some locking mechanism is needed to allow multiple
-boinc clients.
+directory so
+some locking or other protection mechanism
+is needed to allow
+multiple boinc clients.
 
 = Other ideas =
 
