@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Tool to add tools according to project configuration.
+
+PROJECT_DIR=@PROJECT_DIR@
+
+echo select scos_project.name, scos_tools.name from scos_project, scos_tools where scos_project.id = project |
+mysql -u osstest -D osstest --password=password |
+while read proj tool
+do
+    
+    mkdir -p ${PROJECT_DIR}/apps/${proj}
+done
+
