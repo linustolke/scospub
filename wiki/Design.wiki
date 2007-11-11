@@ -82,7 +82,7 @@ The files from projects/<WHATEVER>/scospub are copied
 by a special tool to
 the projects/<WHATEVER> directory on the CentralHost:
 
-  apps/<OSPROJ>/<TOOL>_version_platform/wrapper_version_platform
+  apps/<OSPROJ>/<TOOL>_version_platform/<TOOL>_version_platform
   apps/<OSPROJ>/<TOOL>_version_platform/<TOOL>=<TOOL>_version_platform
   apps/<OSPROJ>/<TOOL>_version_platform/job.xml=job_version.xml
   apps/<OSPROJ>/<TOOL>_version_platform/<FILE>
