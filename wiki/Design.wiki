@@ -70,8 +70,9 @@ In the projects/<WHATEVER> directory on the CentralHost
 the following files are installed by make in the scospub project:
 
   scospub/<TOOL>/<TOOL>_platform/wrapper_version_platform
-  scospub/<TOOL>/<TOOL>_platform/<TOOL>=<TOOL>_version_platform
+  scospub/<TOOL>/<TOOL>_platform/<FILE>=<FILE>_version_platform
   scospub/<TOOL>/<TOOL>_platform/job.xml=job_version.xml
+  scospub/<TOOL>/<FILE>
   scospub/<TOOL>/<TOOL>_wu
   scospub/<TOOL>/<TOOL>_result
 
@@ -84,6 +85,7 @@ the projects/<WHATEVER> directory on the CentralHost:
   apps/<OSPROJ>/<TOOL>_version_platform/wrapper_version_platform
   apps/<OSPROJ>/<TOOL>_version_platform/<TOOL>=<TOOL>_version_platform
   apps/<OSPROJ>/<TOOL>_version_platform/job.xml=job_version.xml
+  apps/<OSPROJ>/<TOOL>_version_platform/<FILE>
   templates/<TOOL>_wu
   templates/<TOOL>_result
 
