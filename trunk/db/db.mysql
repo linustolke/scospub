@@ -8,9 +8,13 @@ create table scos_project (
     user_friendly_name STRING,
 }
 
+# One item for every configured tool in every project.
 create table scos_tools {
     id INTEGER NOT NULL AUTO_INCREMENT,
+    project INTEGER,
+    foreign key project references scos_project (id) on delete cascade,
     name STRING,
+    config STRING,
     active Bool
 }
 

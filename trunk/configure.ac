@@ -72,6 +72,7 @@ AC_CHECK_FUNCS([memset])
 AC_CONFIG_FILES(Makefile
 	        application/Makefile
                 tools/Makefile
+                tools/addosproj.sh
 		tools/checkstyle/Makefile
                 html/Makefile
                 html/languages/Makefile
