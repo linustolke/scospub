@@ -2,7 +2,7 @@ noinst_PROGRAMS = wrapper
 install-data-local:
 	mkdir -p $(PROJECT_DIR)/apps/wrapper
 	cmp wrapper $(PROJECT_DIR)/apps/wrapper/wrapper_$(VERSION)_$(host) || \
-	cp wrapper $(PROJECT_DIR)/apps/wrapper/wrapper_$(VERSION)_$(host)
+	$(INSTALL_PROGRAM) wrapper $(PROJECT_DIR)/apps/wrapper/wrapper_$(VERSION)_$(host)
 
 wrapper_SOURCES = wrapper.C
 
