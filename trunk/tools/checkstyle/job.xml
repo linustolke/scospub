@@ -3,7 +3,7 @@
     <application>svn</application>
     <stdin_filename>null</stdin_filename>
     <stdout_filename>svnout</stdout_filename>
-    <command_line>co http://argouml-cpp.tigris.org/svn/trunk/src /tmp/scospub/acpp/trunk/src -username guest -password ''</command_line>
+    <command_line>co http://argouml-cpp.tigris.org/svn/trunk/src /tmp/scospub/acpp/trunk/src --username guest --password ''</command_line>
   </task>
   <task>
     <application>java</application>

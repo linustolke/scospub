@@ -1,5 +1,5 @@
 # Because of BOINC the version number must be n.m where m<100
-AC_INIT([scospub], [0.1], [ltolke@gmail.com])
+AC_INIT([scospub], [0.2], [ltolke@gmail.com])
 AM_INIT_AUTOMAKE([-Wall foreign])
 
 AC_ARG_WITH(boinc,
@@ -18,8 +18,6 @@ AC_ARG_WITH(boinc,
            )
 
 AC_SUBST(BOINC_DIR, [$with_boinc])
-AC_SUBST(BOINC_API_DIR, [$with_boinc/api])
-AC_SUBST(BOINC_LIB_DIR, [$with_boinc/lib])
 
 AC_ARG_WITH(project,
             AC_HELP_STRING([--with-project=/where/projects/project],
@@ -52,6 +50,8 @@ if [ $GXX = yes ]; then
   ln -sf `g++ -print-file-name=libstdc++.a` application
 fi
 ]
+
+WITH_MYSQL()
 
 # Checks for libraries.
 

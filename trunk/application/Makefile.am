@@ -1,22 +1,37 @@
-noinst_PROGRAMS = wrapper
+noinst_PROGRAMS = wrapper scospub_work_generator
 install-data-local:
-	mkdir -p $(PROJECT_DIR)/apps/wrapper
-	cmp wrapper $(PROJECT_DIR)/apps/wrapper/wrapper_$(VERSION)_$(host) || \
-	$(INSTALL_PROGRAM) wrapper $(PROJECT_DIR)/apps/wrapper/wrapper_$(VERSION)_$(host)
+	$(INSTALL_PROGRAM) scospub_work_generator $(PROJECT_DIR)/bin
 
 wrapper_SOURCES = wrapper.C
 
-CXXFLAGS = -I$(BOINC_DIR) \
-    -I$(BOINC_API_DIR) \
-    -I$(BOINC_LIB_DIR)
+AM_CPPFLAGS = \
+    -I$(BOINC_DIR) \
+    -I$(BOINC_DIR)/api \
+    -I$(BOINC_DIR)/lib \
+    -I$(BOINC_DIR)/db \
+    -I$(BOINC_DIR)/tools \
+    -I$(BOINC_DIR)/sched
 
-wrapper_LDFLAGS = \
-    libstdc++.a \
+BOINC_LIB = \
+    -L$(BOINC_DIR)/lib \
+    -lboinc
+
+wrapper_LFLAGS = \
     -pthread
 
 wrapper_LDADD = \
-    -L$(BOINC_API_DIR) \
-    -L$(BOINC_LIB_DIR) \
+    -L$(BOINC_DIR)/api \
     -lboinc_api \
-    -lboinc
+    $(BOINC_LIB) \
+    libstdc++.a
+
+scospub_work_generator_LDADD = \
+    -L$(BOINC_DIR)/sched \
+    -lsched \
+    $(MYSQL_LIBS) \
+    $(BOINC_LIB) \
+    $(PTHREAD_LIBS) \
+    -lcrypto \
+    libstdc++.a
+
 
