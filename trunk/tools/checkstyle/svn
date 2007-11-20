@@ -1,1 +1,2 @@
-<soft_link>/usr/bin/svn<soft_link>
+#!/bin/sh
+exec /usr/bin/svn "$@"

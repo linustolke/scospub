@@ -1,3 +1,13 @@
+// SCOSPUB - tools supporting Open Source development.
+// Copyright (C) 2007 Linus Tolke
+//
+// This is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation;
+// either version 2.1 of the License, or (at your option)
+// any later version.
+//
+// Based on the sample_work_generator.C belonging to
 // Berkeley Open Infrastructure for Network Computing
 // http://boinc.berkeley.edu
 // Copyright (C) 2007 University of California
@@ -16,6 +26,7 @@
 // http://www.gnu.org/copyleft/lesser.html
 // or write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
 
 // scospub_work_generator.C: creates work for an os project
 // Initially this will be hardcoded but eventually this is
@@ -81,7 +92,11 @@ int make_job(int rev) {
     if (!f) return ERR_FOPEN;
 
     // TODO: The input file contents, it should control the build.
-    fprintf(f, "This is the input file for job %s", name);
+    fprintf(f, "This is the input file for job %s\n", name);
+    if (rev > 0)
+    {
+	fprintf(f, "Do for revision %d\n", rev);
+    }
 
     fclose(f);
 
@@ -157,7 +172,7 @@ void main_loop()
 	    commandline.append(svn_password);
 	    commandline.append("' > '");
 	    commandline.append(filename);
-	    commandline.append("'");
+	    commandline.append("' 2>&1");
 
 	    int result = system(commandline.c_str());
 
@@ -169,6 +184,11 @@ void main_loop()
 				    svn_url,
 				    result
 			);
+
+		// TODO: Hardcoded to allow testing without repository
+		// access.
+		make_job(0);
+		sleep(1000);
 
 		// TODO: Hardcoded
 		sleep(100);
