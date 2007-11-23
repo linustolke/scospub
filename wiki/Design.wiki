@@ -63,41 +63,34 @@ Configuring the clients, alternative 2:
 Every OpenSourceProject has its own application with tools provided
 according to its configuration.
 
-Initially we will go with alternative 2.
-This is based on the Boinc documentation.
+We work with alternative 1. It seems to fit better with the large-files
+that would be the tools.
+This also means that we can install application and tools directly from
+Makefiles in the scosconf project.
 
 In the projects/<WHATEVER> directory on the CentralHost
 the following files are installed by make in the scospub project:
 
-  scospub/<TOOL>/<TOOL>_platform/wrapper_version_platform
-  scospub/<TOOL>/<TOOL>_platform/<FILE>=<FILE>_version_platform
-  scospub/<TOOL>/<TOOL>_platform/job.xml=job_version.xml
-  scospub/<TOOL>/<FILE>
-  scospub/<TOOL>/<TOOL>_wu
-  scospub/<TOOL>/<TOOL>_result
+  apps/wrapper/wrapper_<VERSION>_<PLATFORM>/wrapper_<VERSION>_<PLATFORM>
+  apps/wrapper/wrapper_<VERSION>_<PLATFORM>/java=java_<VERSION>_<PLATFORM>
+  apps/wrapper/wrapper_<VERSION>_<PLATFORM>/svn=svn_<VERSION>_<PLATFORM>
 
-The list of tools is defined by the scospub source.
+Most tools run from wrapper has the same input files so the templates
+are simplified.
+The following templates are installed:
 
-The files from projects/<WHATEVER>/scospub are copied
-by a special tool to
-the projects/<WHATEVER> directory on the CentralHost:
+  templates/scospub0_wu
+  templates/scospub0_result
+  templates/scospub1_wu
+  templates/scospub1_result
 
-  apps/<OSPROJ>/<TOOL>_version_platform/<TOOL>_version_platform
-  apps/<OSPROJ>/<TOOL>_version_platform/<TOOL>=<TOOL>_version_platform
-  apps/<OSPROJ>/<TOOL>_version_platform/job.xml=job_version.xml
-  apps/<OSPROJ>/<TOOL>_version_platform/<FILE>
-  templates/<TOOL>_wu
-  templates/<TOOL>_result
+where the number in the name reflects how many input files except for
+job.xml that are provided and how many output files that are handled.
 
-The list of osproj is defined by the [OpenSourceProjectAdministator]s
-using the web interface. These files are installed automatically.
-
-In the slot directory on the CheckHost:
-  job.xml
-  stdin
-  stdout
-  wrapper_version_platform
-  tool
+The job.xml is generated separate for every job
+depending on the configurations of the project done 
+by the [OpenSourceProjectAdministator]s
+using the web interface.
 
 In order not to affect the normal boinc handling of files,
 we have a work directory where checked out files reside.
@@ -111,10 +104,5 @@ is needed to allow
 multiple boinc clients.
 
 = Other ideas =
-
-The tool wrapper, from boinc_samples, handles a list of commands,
-saving and restoring state between them, and job control.
-That would be a good starting point since
-we are to use a lot of exterior tools.
 
 We should strive to create as small work packages as possible.
