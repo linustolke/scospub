@@ -105,19 +105,36 @@ int make_job(int rev) {
     f << "out1";
     f << "</stdout_filename>\n";
     f << "    <command_line>";
-    f << "co --no-auth-cache http://argouml-cpp.tigris.org/svn/argouml-cpp/trunk/src /tmp/scospub/acpp/trunk/src --username guest --password ''";
+
+    f << "co";
+    if (rev > 0)
+    {
+        f << " -r " << rev;
+    }
+    f << " --no-auth-cache";
+    f << " http://argouml-cpp.tigris.org/svn/argouml-cpp/trunk/src";
+    f << " /tmp/scospub/acpp/trunk/src";
+    f << " --username guest ";
+    f << " --password ''";
+
     f << "</command_line>\n";
     f << "  </task>\n";
 
     f << "  <task>\n";
     f << "    <application>";
-    f << "svn";
+    f << "checkstyle-java";
     f << "</application>\n";
     f << "    <stdout_filename>";
     f << "out2";
     f << "</stdout_filename>\n";
+    f << "    <stderr_filename>";
+    f << "out3";
+    f << "</stderr_filename>\n";
     f << "    <command_line>";
-    f << "-cp checkstyle-all-4.3.jar com.puppycrawl.tools.checkstyle.Main /tmp/scospub/acpp/trunk/src";
+    f << "-cp checkstyle-all-4.3.jar";
+    f << " com.puppycrawl.tools.checkstyle.Main";
+    f << " -c checkstyle-sun_checks.xml";
+    f << " -r /tmp/scospub/acpp/trunk/src";
     f << "</command_line>\n";
     f << "  </task>\n";
     f << "</job_desc>\n";
@@ -140,13 +157,17 @@ int make_job(int rev) {
     wu.max_error_results = REPLICATION_FACTOR*4;
     wu.max_total_results = REPLICATION_FACTOR*8;
     wu.max_success_results = REPLICATION_FACTOR*4;
-    const char * infiles[1];
+
+    const int num_infiles = 3;
+    const char * infiles[num_infiles];
     infiles[0] = name;
+    infiles[1] = "checkstyle-all-4.3.jar";
+    infiles[2] = "checkstyle-sun_checks.xml";
 
     // TODO: Hardcoded!
     if (wu_template == NULL)
     {
-        if (read_file_malloc("../templates/scospub0_wu", wu_template))
+        if (read_file_malloc("../templates/checkstyle_wu", wu_template))
 	{
 	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL, "can't read WU template\n");
 	    exit(1);
@@ -159,10 +180,10 @@ int make_job(int rev) {
         wu,
         wu_template,
 	// TODO: Hardcoded project and tool
-        "templates/scospub2_result",
-        "../templates/scospub2_result",
+        "templates/scospub3_result",
+        "../templates/scospub3_result",
         infiles,
-        1,
+        num_infiles,
         config
     );
 }
