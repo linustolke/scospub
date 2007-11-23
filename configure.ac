@@ -73,7 +73,7 @@ AC_CONFIG_FILES(Makefile
 	        application/Makefile
                 tools/Makefile
                 tools/addosproj.sh
-		tools/checkstyle/Makefile
+		wu/Makefile
                 html/Makefile
                 html/languages/Makefile
                 html/languages/project_specific_translations/Makefile

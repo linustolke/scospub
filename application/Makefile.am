@@ -1,6 +1,17 @@
+FILES = svn java
+
+RUNAPP=wrapper
+APPDIR = $(PROJECT_DIR)/apps/$(RUNAPP)
+APPVERDIR = $(APPDIR)/$(RUNAPP)_$(VERSION)_$(host)
+
 noinst_PROGRAMS = wrapper scospub_work_generator
 install-data-local:
 	$(INSTALL_PROGRAM) scospub_work_generator $(PROJECT_DIR)/bin
+	mkdir -p $(APPVERDIR)
+	for file in $(FILES); do \
+	  cp $${file} $(APPVERDIR)/$${file}=$${file}_$(VERSION)_$(host); \
+	done
+	$(INSTALL_PROGRAM) wrapper $(APPVERDIR)/wrapper_$(VERSION)_$(host)
 
 wrapper_SOURCES = wrapper.C
 

@@ -63,7 +63,7 @@
 
 // globals
 //
-char* wu_template;
+char* wu_template = NULL;
 DB_APP app;
 int start_time;
 int seqno;
@@ -73,35 +73,60 @@ SCHED_CONFIG config;
 //
 // TODO: Hardcoded svn, project
 int make_job(int rev) {
-    DB_WORKUNIT wu;
-    char name[256], path[256];
-    const char* infiles[1];
-    int retval;
+    // Files to create:
+    // job.xml different for each job
+    // input files (any?)
 
     // make a unique name (for the job and its input file)
     //
     // TODO: Hardcoded Project and tool
-    sprintf(name, "acpp-checkstyle_%d_%d", start_time, seqno++);
+    char name[255];
+    sprintf(name, "checkstyle_%d_%d", start_time, seqno++);
 
     // Create the input file.
     // Put it at the right place in the download dir hierarchy
     //
-    retval = config.download_path(name, path);
+    char path[255];
+    int retval = config.download_path(name, path);
     if (retval) return retval;
-    FILE* f = fopen(path, "w");
-    if (!f) return ERR_FOPEN;
 
-    // TODO: The input file contents, it should control the build.
-    fprintf(f, "This is the input file for job %s\n", name);
-    if (rev > 0)
-    {
-	fprintf(f, "Do for revision %d\n", rev);
-    }
+    std::ofstream f(path);
+    if (!f.is_open()) return ERR_FOPEN;
 
-    fclose(f);
+    f << "<!-- File for " << rev << "-->\n";
+
+    // TODO: Hardcoded
+    f << "<job_desc>\n";
+    f << "  <task>\n";
+    f << "    <application>";
+    f << "svn";
+    f << "</application>\n";
+    f << "    <stdout_filename>";
+    f << "out1";
+    f << "</stdout_filename>\n";
+    f << "    <command_line>";
+    f << "co --no-auth-cache http://argouml-cpp.tigris.org/svn/argouml-cpp/trunk/src /tmp/scospub/acpp/trunk/src --username guest --password ''";
+    f << "</command_line>\n";
+    f << "  </task>\n";
+
+    f << "  <task>\n";
+    f << "    <application>";
+    f << "svn";
+    f << "</application>\n";
+    f << "    <stdout_filename>";
+    f << "out2";
+    f << "</stdout_filename>\n";
+    f << "    <command_line>";
+    f << "-cp checkstyle-all-4.3.jar com.puppycrawl.tools.checkstyle.Main /tmp/scospub/acpp/trunk/src";
+    f << "</command_line>\n";
+    f << "  </task>\n";
+    f << "</job_desc>\n";
+
+    f.close();
 
     // Fill in the job parameters
     //
+    DB_WORKUNIT wu;
     wu.clear();
     wu.appid = app.id;
     strcpy(wu.name, name);
@@ -115,7 +140,18 @@ int make_job(int rev) {
     wu.max_error_results = REPLICATION_FACTOR*4;
     wu.max_total_results = REPLICATION_FACTOR*8;
     wu.max_success_results = REPLICATION_FACTOR*4;
+    const char * infiles[1];
     infiles[0] = name;
+
+    // TODO: Hardcoded!
+    if (wu_template == NULL)
+    {
+        if (read_file_malloc("../templates/scospub0_wu", wu_template))
+	{
+	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL, "can't read WU template\n");
+	    exit(1);
+	}
+    }
 
     // Register the job with BOINC
     //
@@ -123,8 +159,8 @@ int make_job(int rev) {
         wu,
         wu_template,
 	// TODO: Hardcoded project and tool
-        "templates/checkstyle_result",
-        "../templates/checkstyle_result",
+        "templates/scospub2_result",
+        "../templates/scospub2_result",
         infiles,
         1,
         config
@@ -145,7 +181,7 @@ void main_loop()
 
 	    char tempfile[100];
 
-	    strcpy(tempfile, "/tmp/scospubWG.XXXXXXXX");
+	    strcpy(tempfile, "/tmp/scospubWG.XXXXXX");
 
 	    char * filename = mktemp(tempfile);
 	    // TODO: errorcheck!
@@ -295,13 +331,8 @@ int main(int argc, char** argv) {
         exit(1);
     }
     // TODO: Hardcoded!
-    if (app.lookup("where name='acpp'")) {
+    if (app.lookup("where name='wrapper'")) {
         log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL, "can't find app\n");
-        exit(1);
-    }
-    // TODO: Hardcoded!
-    if (read_file_malloc("../templates/checkstyle_wu", wu_template)) {
-        log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL, "can't read WU template\n");
         exit(1);
     }
 
