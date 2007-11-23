@@ -4,6 +4,7 @@ FILES = \
 TOOLDIR = $(PROJECT_DIR)/scospub/tools
 
 install-data-local:
+	cwd=`cd $(srcdir) && pwd`; \
 	for file in $(FILES); do \
-	  cp $${file} `$(PROJECT_DIR)/bin/db_hier $${file}`; \
+	  cd $(PROJECT_DIR) && cp $${cwd}/$${file} `bin/dir_hier_path $${file}`; \
 	done

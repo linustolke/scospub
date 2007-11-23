@@ -1,5 +1,5 @@
 # Because of BOINC the version number must be n.m where m<100
-AC_INIT([scospub], [0.4], [ltolke@gmail.com])
+AC_INIT([scospub], [0.7], [ltolke@gmail.com])
 AM_INIT_AUTOMAKE([-Wall foreign])
 
 AC_ARG_WITH(boinc,
@@ -72,7 +72,6 @@ AC_CHECK_FUNCS([memset])
 AC_CONFIG_FILES(Makefile
 	        application/Makefile
                 tools/Makefile
-                tools/addosproj.sh
 		wu/Makefile
                 html/Makefile
                 html/languages/Makefile
