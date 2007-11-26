@@ -97,13 +97,46 @@ int make_job(int rev) {
 
     // TODO: Hardcoded
     f << "<job_desc>\n";
+
+    // TODO: This is a crude way of giving the assimilator a simple
+    // way to know where to put this information.
+    // This could be built into a better wrapper application.
     f << "  <task>\n";
     f << "    <application>";
-    f << "svn";
+    f << "echo";
     f << "</application>\n";
     f << "    <stdout_filename>";
     f << "out1";
     f << "</stdout_filename>\n";
+    f << "    <command_line>";
+
+    // TODO: Flera olika revisioner.
+    // osproj rev
+    f << "acpp " << rev;
+
+    f << "</command_line>\n";
+    f << "  </task>\n";
+
+    f << "  <task>\n";
+    f << "    <application>";
+    f << "echo";
+    f << "</application>\n";
+    f << "    <stdout_filename>";
+    f << "out1";
+    f << "</stdout_filename>\n";
+    f << "    <command_line>";
+
+    // toolid tool config
+    f << 1 << " checkstyle checkstyle-sun_checks.xml";
+
+    f << "</command_line>\n";
+    f << "  </task>\n";
+
+
+    f << "  <task>\n";
+    f << "    <application>";
+    f << "svn";
+    f << "</application>\n";
     f << "    <command_line>";
 
     f << "co";
