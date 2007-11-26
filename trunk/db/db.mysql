@@ -1,28 +1,30 @@
 create table scos_project (
     id INTEGER NOT NULL AUTO_INCREMENT,
-    UNIQUE id,
+    UNIQUE KEY id (`id`),
     name STRING,
-    UNIQUE name,
+    UNIQUE KEY name (`name`),
     active Bool,
 
     user_friendly_name STRING,
-}
+};
 
 # One item for every configured tool in every project.
-create table scos_tools {
+create table scos_tool {
     id INTEGER NOT NULL AUTO_INCREMENT,
     project INTEGER,
-    foreign key project references scos_project (id) on delete cascade,
+    FOREIGN KEY project REFERENCES scos_project (id) ON DELETE CASCADE,
     name STRING,
     config STRING,
     active Bool
-}
+};
 
-create table scos_results {
+create table scos_result {
     id INTEGER NOT NULL AUTO_INCREMENT,
-    when DATETIME,
-    version INTEGER, # We are assuming Subversion here.
+    create_time DATETIME,
+    revision INTEGER, # We are assuming Subversion here.
     tool INTEGER,
-    foreign key tool references scos_tools (id) on delete cascade,
-    result INTEGER
-}
+    FOREIGN KEY tool REFERENCES scos_tools (id) ON DELETE CASCADE,
+    result INTEGER,
+    file STRING
+};
+

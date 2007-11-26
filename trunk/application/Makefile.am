@@ -46,10 +46,11 @@ scospub_work_generator_LDADD = \
     -lcrypto \
     libstdc++.a
 
-scospub_assimilator_SOURCES = scospub_assimilator.C
+scospub_assimilator_SOURCES = scospub_assimilator.C scospub_db.C
 
 scospub_assimilator_LDADD = \
     $(BOINC_DIR)/sched/assimilator.o \
+    $(BOINC_DIR)/sched/validate_util.o \
     -L$(BOINC_DIR)/sched \
     -lsched \
     $(BOINC_LIB) \
