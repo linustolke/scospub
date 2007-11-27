@@ -66,22 +66,29 @@
 char* wu_template = NULL;
 DB_APP app;
 int start_time;
-int seqno;
 SCHED_CONFIG config;
 
 // create one new job
 //
 // TODO: Hardcoded svn, project
-int make_job(int rev) {
+int make_job(int rev)
+{
     // Files to create:
     // job.xml different for each job
     // input files (any?)
 
     // make a unique name (for the job and its input file)
     //
-    // TODO: Hardcoded Project and tool
+    // This name is also used by the work assimilation to enter
+    // the result in the correct way.
+    // TODO: Hardcoded Project, toolid, tool.
     char name[255];
-    sprintf(name, "checkstyle_%d_%d", start_time, seqno++);
+    sprintf(name,
+	    "checkstyle_%s-%d-%d_%d",
+	    "acpp",
+	    rev,
+	    1,
+	    start_time);
 
     // Create the input file.
     // Put it at the right place in the download dir hierarchy
@@ -97,42 +104,6 @@ int make_job(int rev) {
 
     // TODO: Hardcoded
     f << "<job_desc>\n";
-
-    // TODO: This is a crude way of giving the assimilator a simple
-    // way to know where to put this information.
-    // This could be built into a better wrapper application.
-    f << "  <task>\n";
-    f << "    <application>";
-    f << "echo";
-    f << "</application>\n";
-    f << "    <stdout_filename>";
-    f << "out1";
-    f << "</stdout_filename>\n";
-    f << "    <command_line>";
-
-    // TODO: Flera olika revisioner.
-    // osproj rev
-    f << "acpp " << rev;
-
-    f << "</command_line>\n";
-    f << "  </task>\n";
-
-    f << "  <task>\n";
-    f << "    <application>";
-    f << "echo";
-    f << "</application>\n";
-    f << "    <stdout_filename>";
-    f << "out1";
-    f << "</stdout_filename>\n";
-    f << "    <command_line>";
-
-    // toolid tool config
-    f << 1 << " checkstyle checkstyle-sun_checks.xml";
-
-    f << "</command_line>\n";
-    f << "  </task>\n";
-
-
     f << "  <task>\n";
     f << "    <application>";
     f << "svn";
@@ -158,10 +129,10 @@ int make_job(int rev) {
     f << "checkstyle-java";
     f << "</application>\n";
     f << "    <stdout_filename>";
-    f << "out2";
+    f << "out1";
     f << "</stdout_filename>\n";
     f << "    <stderr_filename>";
-    f << "out3";
+    f << "out2";
     f << "</stderr_filename>\n";
     f << "    <command_line>";
     f << "-cp checkstyle-all-4.3.jar";
@@ -213,8 +184,8 @@ int make_job(int rev) {
         wu,
         wu_template,
 	// TODO: Hardcoded project and tool
-        "templates/scospub3_result",
-        "../templates/scospub3_result",
+        "templates/scospub2_result",
+        "../templates/scospub2_result",
         infiles,
         num_infiles,
         config
@@ -391,7 +362,6 @@ int main(int argc, char** argv) {
     }
 
     start_time = time(0);
-    seqno = 0;
 
     log_messages.printf(SCHED_MSG_LOG::MSG_NORMAL, "Starting\n");
 
