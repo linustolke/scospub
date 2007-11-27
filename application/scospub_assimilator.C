@@ -2,6 +2,7 @@
 
 #include "filesys.h"
 
+#include "sched_msgs.h"
 #include "assimilate_handler.h"
 #include "validate_util.h"
 
@@ -19,48 +20,54 @@ int assimilate_handler(
         return 0;
     }
 
+    SCOPE_MSG_LOG log(log_messages, SCHED_MSG_LOG::MSG_NORMAL);
+
     if (wu.canonical_resultid)
     {
         vector<string> output_file_paths;
         get_output_file_paths(canonical_result, output_file_paths);
 
 	// TODO: Hardcoded count of files.
-	if (output_file_paths.size() != 3)
+#define COUNT_OUTPUT_FILES 2
+	if (output_file_paths.size() != COUNT_OUTPUT_FILES)
 	{
-	    // TODO: Logg the error.
+	    log.printf("Not right count of files: %d != %d\n",
+		       output_file_paths.size(),
+		       COUNT_OUTPUT_FILES);
+	    return 1;
+	}
+
+#define MAX_FILE_NAME_LEN 1025
+	char toolfilename[MAX_FILE_NAME_LEN];
+	char projectname[MAX_FILE_NAME_LEN];
+	int toolid;
+	int rev;
+	int wgstart;
+
+	if (sscanf(wu.name, "%[^_-]_%[^_-]-%d-%d_%d",
+		   toolfilename,
+		   projectname,
+		   &rev,
+		   &toolid,
+		   &wgstart
+		   ) != 5)
+	{
+	    log.printf("Cannot parse information from unit name %s.\n",
+		       wu.name);
 	    return 1;
 	}
 
 	// Lets initially assume that the files are always in the
 	// right order.
 
-	// out1:
-	// Line 1: project, rev
-	// Line 2: toolid tool config
-	std::ifstream f1(output_file_paths[0].c_str());
-
-	string osproj;
-	int rev;
-
-	// TODO: Felhantering
-	// TODO: Flera olika revisions.
-	f1 >> osproj >> rev;
-
-	int toolid;
-	string tool;
-	string config;
-
-	// TODO: Felhantering
-	f1 >> toolid >> tool >> config;
-
-	f1.close();
+	// The first file is not currently interesting.
 
 #define SCOSDATA "../html/scosdata"
-	// out2:
+	// out1:
 	int retval = boinc_mkdir(SCOSDATA);
 	if (retval)
 	{
-	    // TODO: Logg the error.
+	    log.printf("Cannot create the directory %s\n", SCOSDATA);
 	    return retval;
 	}
 
@@ -69,17 +76,18 @@ int assimilate_handler(
 	copy_path += "/";
 	copy_path += wu.name;
 
-	string path = output_file_paths[1];
+	string path = output_file_paths[0];
 	
 	retval = boinc_copy(path.c_str() , copy_path.c_str());
 	if (retval)
 	{
-	    // TODO: Logg the error.
+	    log.printf("Cannot copy the result file to %s.\n",
+		       copy_path.c_str());
 	    return retval;
 	}
 
-	// out3:
-	std::ifstream f3(output_file_paths[2].c_str());
+	// out2:
+	std::ifstream f3(output_file_paths[1].c_str());
 
 	int result;
 	f3 >> result;
@@ -92,7 +100,7 @@ int assimilate_handler(
 	res.revision = rev;
 	res.tool = toolid;
 	res.result = result;
-	strcpy(res.file, copy_path.c_str());
+	strncpy(res.file, wu.name, 250);
 
 	res.insert();
 	// TODO: Error handler.

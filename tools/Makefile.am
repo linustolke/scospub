@@ -6,5 +6,5 @@ TOOLDIR = $(PROJECT_DIR)/scospub/tools
 install-data-local:
 	cwd=`cd $(srcdir) && pwd`; \
 	for file in $(FILES); do \
-	  cd $(PROJECT_DIR) && cp $${cwd}/$${file} `bin/dir_hier_path $${file}`; \
+	  cd $(PROJECT_DIR) && ( echo "cp $${cwd}/$${file} download/$${file}" | sh -x); \
 	done

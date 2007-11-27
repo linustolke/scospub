@@ -98,7 +98,7 @@ void DB_SCOS_RESULT::db_print(char* buf)
     sprintf(buf,
 	    "create_time=%d, "
 	    "revision=%d, "
-	    "tool='%s', "
+	    "tool=%d, "
 	    "result=%d, "
 	    "file='%s'",
 	    create_time,
