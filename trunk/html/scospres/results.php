@@ -17,7 +17,7 @@ if ($xml) {
     echo tr(SCOSP_RESULT_DESCRIPTION)."<br><br>
     ";
 }
-$projid = $_GET['projid']
+$projid = $_GET['projid'];
 if (!$projid) {
     echo tr(SCOSP_RESULT_NO_PROJ)."<br>
         <a href='projects.php'>".tr(SCOSP_ALL_PROJECTS)."</a><br>

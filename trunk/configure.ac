@@ -74,6 +74,7 @@ AC_CONFIG_FILES(Makefile
                 tools/Makefile
 		wu/Makefile
                 html/Makefile
+                html/scospub.httpd.conf
                 html/languages/Makefile
                 html/languages/project_specific_translations/Makefile
 		html/scosconf/Makefile

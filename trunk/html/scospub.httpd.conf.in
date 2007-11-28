@@ -1,0 +1,6 @@
+## Settings for SCOSPUB project
+## This works as a complement to the settings for the boinc project.
+
+Alias /scosconf @PROJECT_DIR@/html/scosconf
+Alias /scospres @PROJECT_DIR@/html/scospres
+

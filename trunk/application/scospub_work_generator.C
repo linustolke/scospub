@@ -246,11 +246,6 @@ void main_loop()
 				    result
 			);
 
-		// TODO: Hardcoded to allow testing without repository
-		// access.
-		make_job(0);
-		sleep(1000);
-
 		// TODO: Hardcoded
 		sleep(100);
 

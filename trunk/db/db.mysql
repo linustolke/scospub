@@ -1,30 +1,31 @@
 create table scos_project (
     id INTEGER NOT NULL AUTO_INCREMENT,
     UNIQUE KEY id (`id`),
-    name STRING,
+    name varchar(256),
     UNIQUE KEY name (`name`),
     active Bool,
 
-    user_friendly_name STRING,
-};
+    user_friendly_name varchar(256),
+) engine=innodb;
 
 # One item for every configured tool in every project.
-create table scos_tool {
+create table scos_tool (
     id INTEGER NOT NULL AUTO_INCREMENT,
+    UNIQUE KEY id (`id`),
     project INTEGER,
     FOREIGN KEY project REFERENCES scos_project (id) ON DELETE CASCADE,
-    name STRING,
-    config STRING,
+    name varchar(256),
+    config varchar(256),
     active Bool
-};
+) engine=innodb;
 
-create table scos_result {
+create table scos_result (
     id INTEGER NOT NULL AUTO_INCREMENT,
     create_time DATETIME,
     revision INTEGER, # We are assuming Subversion here.
     tool INTEGER,
     FOREIGN KEY tool REFERENCES scos_tools (id) ON DELETE CASCADE,
     result INTEGER,
-    file STRING
-};
+    file varchar(256)
+) engine=innodb;
 

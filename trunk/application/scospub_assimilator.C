@@ -62,7 +62,7 @@ int assimilate_handler(
 
 	// The first file is not currently interesting.
 
-#define SCOSDATA "../html/scosdata"
+#define SCOSDATA "../html/scospres/DATA"
 	// out1:
 	int retval = boinc_mkdir(SCOSDATA);
 	if (retval)
