@@ -2,16 +2,8 @@
 
 #include "scospub_db.h"
 
-static inline void
-ESCAPE(char * x)
-{
-    escape_string(x, sizeof(x));
-}
-static inline void
-UNESCAPE(char * x)
-{
-    unescape_string(x, sizeof(x));
-}
+#define ESCAPE(x) escape_string(x, sizeof(x))
+#define UNESCAPE(x) unescape_string(x, sizeof(x))
 
 void SCOS_PROJECT::clear() {memset(this, 0, sizeof(*this));}
 void SCOS_TOOL::clear() {memset(this, 0, sizeof(*this));}
@@ -100,7 +92,8 @@ void DB_SCOS_RESULT::db_print(char* buf)
 	    "revision=%d, "
 	    "tool=%d, "
 	    "result=%d, "
-	    "file='%s'",
+	    "file='%s', "
+	    "date=NOW() ",
 	    create_time,
 	    revision,
 	    tool,
