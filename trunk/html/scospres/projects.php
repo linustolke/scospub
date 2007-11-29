@@ -35,10 +35,13 @@ while ($proj = mysql_fetch_object($result)) {
     } else {
         echo "
             <tr>
-              <td>$proj->user_friendly_name</td>
+              <td><a name='$proj->name'>$proj->user_friendly_name</a></td>
         ";
 
-	$r2 = mysql_query("select count(*) as num from scos_result where projectid=$proj->id");
+	$r2 = mysql_query("SELECT count(*) as num "
+		. "FROM scos_result, scos_tool "
+		. "WHERE scos_result.tool = scos_tool.id "
+		. "AND project=$proj->id");
 	if ($av = mysql_fetch_object($r2)) {
 	   echo "
 		  <td>
@@ -53,7 +56,12 @@ while ($proj = mysql_fetch_object($result)) {
 	   ";
 	}
 
-	$r3 = mysql_query("select date from scos_result where projectid=$proj->id order by date desc limit 1");
+	$r3 = mysql_query("SELECT date "
+		. "FROM scos_result, scos_tool "
+		. "WHERE scos_result.tool = scos_tool.id "
+		. "AND project=$proj->id "
+		. "ORDER BY date DESC "
+		. "LIMIT 1");
 	if ($av = mysql_fetch_object($r2)) {
 	   echo "
 		  <td>$av->date</td>
