@@ -62,7 +62,7 @@ while ($proj = mysql_fetch_object($result)) {
 		. "AND project=$proj->id "
 		. "ORDER BY date DESC "
 		. "LIMIT 1");
-	if ($av = mysql_fetch_object($r2)) {
+	if ($av = mysql_fetch_object($r3)) {
 	   echo "
 		  <td>$av->date</td>
 	   ";
