@@ -3,7 +3,7 @@ create table scos_project (
     UNIQUE KEY id (`id`),
     name varchar(256),
     UNIQUE KEY name (`name`),
-    active Bool,
+    active INTEGER,
 
     user_friendly_name varchar(256),
 ) engine=innodb;
@@ -14,9 +14,9 @@ create table scos_tool (
     UNIQUE KEY id (`id`),
     project INTEGER,
     FOREIGN KEY project REFERENCES scos_project (id) ON DELETE CASCADE,
-    name varchar(256),
-    config varchar(256),
-    active Bool
+    name VARCHAR(256),
+    config VARCHAR(256),
+    active INTEGER
 ) engine=innodb;
 
 create table scos_result (
