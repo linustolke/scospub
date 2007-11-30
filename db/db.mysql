@@ -3,9 +3,23 @@ create table scos_project (
     UNIQUE KEY id (`id`),
     name varchar(256),
     UNIQUE KEY name (`name`),
-    active INTEGER,
-
     user_friendly_name varchar(256),
+    active BOOL
+) engine=innodb;
+
+create table scos_source (
+    id INTEGER NOT NULL AUTO_INCREMENT,
+    UNIQUE KEY id (`id`),
+    project INTEGER,
+    FOREIGN KEY project (project) REFERENCES scos_project (id) ON DELETE CASCADE,
+    type INTEGER, # 1 = Subversion, 2 = CVS, other...
+	# Subversion
+    url VARCHAR(256),
+    rooturl VARCHAR(256),
+    uuid VARCHAR(100),
+	# CVS: ...
+	# Other...
+    active BOOL
 ) engine=innodb;
 
 # One item for every configured tool in every project.
@@ -13,19 +27,36 @@ create table scos_tool (
     id INTEGER NOT NULL AUTO_INCREMENT,
     UNIQUE KEY id (`id`),
     project INTEGER,
-    FOREIGN KEY project REFERENCES scos_project (id) ON DELETE CASCADE,
+    FOREIGN KEY project (project) REFERENCES scos_project (id) ON DELETE CASCADE,
     name VARCHAR(256),
     config VARCHAR(256),
-    active INTEGER
+    active BOOL
 ) engine=innodb;
 
 create table scos_result (
     id INTEGER NOT NULL AUTO_INCREMENT,
-    create_time DATETIME,
-    revision INTEGER, # We are assuming Subversion here.
+    UNIQUE KEY id (`id`),
+    create_time INTEGER,
+    date DATETIME,
     tool INTEGER,
-    FOREIGN KEY tool REFERENCES scos_tools (id) ON DELETE CASCADE,
+    FOREIGN KEY tool (tool) REFERENCES scos_tool (id) ON DELETE CASCADE,
     result INTEGER,
-    file varchar(256)
+    file VARCHAR(256)
 ) engine=innodb;
 
+create table scos_result_source (
+    source INTEGER,
+    KEY source (source),
+    FOREIGN KEY source (source) REFERENCES scos_source (id) ON DELETE CASCADE,
+
+    result INTEGER,
+    KEY result (result),
+    FOREIGN KEY result (result) REFERENCES scos_result (id) ON DELETE CASCADE,
+    
+	# Subversion
+    revision INTEGER,
+	# CVS
+    date VARCHAR(256),
+	# Other...
+    active BOOL
+) engine=innodb;

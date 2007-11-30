@@ -39,7 +39,9 @@
 // - Creates work for the open source project applications
 // - Creates a new input file for each job;
 //   the file (and the workunit names) contain a timestamp
-//   and sequence number, so that they're unique.
+//   and revision, so that they're unique.
+//
+// There could be another tool generating jobs for all old revisions.
 
 // TODO: OOD!
 
@@ -77,6 +79,16 @@ int make_job(int rev)
     // job.xml different for each job
     // input files (any?)
 
+    const char * project = "acpp";
+    // rev
+
+    // source with urls
+    int urlid = 1;
+
+    const char * tool = "checkstyle";
+    const int toolid = 1;
+    const char * toolconf = "sunchecks";
+
     // make a unique name (for the job and its input file)
     //
     // This name is also used by the work assimilation to enter
@@ -84,10 +96,11 @@ int make_job(int rev)
     // TODO: Hardcoded Project, toolid, tool.
     char name[255];
     sprintf(name,
-	    "checkstyle_%s-%d-%d_%d",
-	    "acpp",
+	    "%s_%s-%d-%d_%d",
+	    tool,
+	    project,
 	    rev,
-	    1,
+	    toolid,
 	    start_time);
 
     // Create the input file.
@@ -98,12 +111,31 @@ int make_job(int rev)
     if (retval) return retval;
 
     std::ofstream f(path);
-    if (!f.is_open()) return ERR_FOPEN;
+    if (!f.is_open())
+    {
+        return ERR_FOPEN;
+    }
 
-    f << "<!-- File for " << rev << "-->\n";
+    f << "<!-- File for " << rev << " -->\n";
 
     // TODO: Hardcoded
     f << "<job_desc>\n";
+    f << "  <project>" << project << "</project>\n";
+    f << "  <revision>" << rev << "</revision>\n";
+    f << "  <tool>" << tool << "</tool>\n";
+    f << "  <toolid>" << toolid << "</toolid>\n";
+    f << "  <config>" << toolconf << "</config>\n";
+
+    // Mapping a project to url
+    f << "  <source>\n";
+    f << "    <svn id='" << urlid << "'>\n";
+    f << "      <url>" << "http://argouml-cpp.tigris.org/svn/argouml-cpp/trunk/src" << "</url>\n";
+    f << "      <checkoutdir>" << "trunk/src" << "</checkoutdir>\n";
+    f << "      <username>" << "guest" << "</username>\n";
+    f << "      <password>" << "" << "</password>\n";
+    f << "    </svn>\n";
+    f << "  </source>\n";
+
     f << "  <task>\n";
     f << "    <application>";
     f << "svn";
@@ -115,9 +147,13 @@ int make_job(int rev)
     {
         f << " -r " << rev;
     }
+
+    // Mapping a project to url
     f << " --no-auth-cache";
     f << " http://argouml-cpp.tigris.org/svn/argouml-cpp/trunk/src";
-    f << " /tmp/scospub/acpp/trunk/src";
+
+    // TODO: Part url! checkoutdir!
+    f << " /tmp/scospub/" << project << "/trunk/src";
     f << " --username guest ";
     f << " --password ''";
 
@@ -126,6 +162,7 @@ int make_job(int rev)
 
     f << "  <task>\n";
     f << "    <application>";
+    // TODO: Mapping tool to application?
     f << "checkstyle-java";
     f << "</application>\n";
     f << "    <stdout_filename>";
@@ -134,11 +171,14 @@ int make_job(int rev)
     f << "    <stderr_filename>";
     f << "out2";
     f << "</stderr_filename>\n";
+
     f << "    <command_line>";
+    // TODO: Mapping tool to application?
     f << "-cp checkstyle-all-4.3.jar";
     f << " com.puppycrawl.tools.checkstyle.Main";
     f << " -c checkstyle-sun_checks.xml";
-    f << " -r /tmp/scospub/acpp/trunk/src";
+    // TODO: Part url! checkoutdir!
+    f << " -r /tmp/scospub/" << project << "/trunk/src";
     f << "</command_line>\n";
     f << "  </task>\n";
     f << "</job_desc>\n";
@@ -171,6 +211,8 @@ int make_job(int rev)
     // TODO: Hardcoded!
     if (wu_template == NULL)
     {
+        // TODO: Mapping tool to wu file?
+
         if (read_file_malloc("../templates/checkstyle_wu", wu_template))
 	{
 	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL, "can't read WU template\n");
