@@ -97,7 +97,7 @@ int assimilate_handler(
 
 	DB_SCOS_RESULT res;
 	res.create_time = canonical_result.received_time;
-	res.revision = rev;
+//	res.revision = rev;
 	res.tool = toolid;
 	res.result = result;
 	strncpy(res.file, wu.name, 250);

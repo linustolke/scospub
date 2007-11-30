@@ -4,11 +4,30 @@
 struct SCOS_PROJECT {
     int id;
     char name[256];
-    int active;
     char user_friendly_name[256];
+    int active;
 
     void clear();
 };
+
+struct SCOS_SOURCE {
+    int id;
+    int project;
+    int type;
+
+    // Subversion
+    char url[256];
+    char rooturl[256];
+    char uuid[100];
+    
+    // CVS:
+    // Other...
+
+    int active;
+
+    void clear();
+};
+
 
 // class to represent a record from the scos_tool table
 struct SCOS_TOOL {
@@ -25,7 +44,7 @@ struct SCOS_TOOL {
 struct SCOS_RESULT {
     int id;
     int create_time;
-    int revision;
+    // date is skipped
     int tool;
     int result;
     char file[256];
@@ -33,26 +52,34 @@ struct SCOS_RESULT {
     void clear();
 };
 
-class DB_SCOS_PROJECT : public DB_BASE, public SCOS_PROJECT {
-public:
-    DB_SCOS_PROJECT(DB_CONN* p = 0);
-    int get_id();
-    void db_print(char*);
-    void db_parse(MYSQL_ROW &row);
-};
+// class to connect the result with the tools
+struct SCOS_RESULT_SOURCE {
+    int source;
+    int result;
 
-class DB_SCOS_TOOL : public DB_BASE, public SCOS_TOOL {
-public:
-    DB_SCOS_TOOL(DB_CONN* p = 0);
-    int get_id();
-    void db_print(char*);
-    void db_parse(MYSQL_ROW &row);
-};
+    // Subversion
+    int revision;
+    // CVS
+    char date[256];
+    // Other
+    // ...
 
-class DB_SCOS_RESULT : public DB_BASE, public SCOS_RESULT {
-public:
-    DB_SCOS_RESULT(DB_CONN* p = 0);
-    int get_id();
-    void db_print(char*);
-    void db_parse(MYSQL_ROW &row);
-};
+    int active;
+
+    void clear();
+};    
+
+#define DBCLASS(type) \
+    class DB_SCOS_ ## type : public DB_BASE, public SCOS_ ## type { \
+    public: \
+	DB_SCOS_ ## type(DB_CONN* p = 0); \
+	int get_id() const; \
+	void db_print(char*) const; \
+	void db_parse(MYSQL_ROW &row); \
+    }
+
+DBCLASS(PROJECT);
+DBCLASS(SOURCE);
+DBCLASS(TOOL);
+DBCLASS(RESULT);
+DBCLASS(RESULT_SOURCE);
