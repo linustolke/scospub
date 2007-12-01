@@ -1,10 +1,12 @@
 #include <fstream>
+#include <map>
 
 #include "filesys.h"
 
 #include "sched_msgs.h"
 #include "assimilate_handler.h"
 #include "validate_util.h"
+#include "str_util.h"
 
 #include "scospub_db.h"
 
@@ -37,24 +39,45 @@ int assimilate_handler(
 	    return 1;
 	}
 
-#define MAX_FILE_NAME_LEN 1025
-	char toolfilename[MAX_FILE_NAME_LEN];
-	char projectname[MAX_FILE_NAME_LEN];
-	int toolid;
-	int rev;
-	int wgstart;
+	char wuname[1025];
 
-	if (sscanf(wu.name, "%[^_-]_%[^_-]-%d-%d_%d",
-		   toolfilename,
-		   projectname,
-		   &rev,
-		   &toolid,
-		   &wgstart
-		   ) != 5)
-	{
-	    log.printf("Cannot parse information from unit name %s.\n",
-		       wu.name);
-	    return 1;
+	safe_strcpy(wuname, wu.name);
+	char * stoksave;
+	char * toolfilename = strtok_r(wuname, "_", &stoksave);
+#define ERRORRET(ARG) if (ARG) { \
+            log.printf("Cannot parse information from unit name %s.\n", \
+		       wu.name); \
+            return 1; \
+	}
+	ERRORRET(toolfilename == NULL);
+
+	char * projectname = strtok_r(NULL, "_", &stoksave);
+	ERRORRET(projectname == NULL);
+
+	char * wgstartcp = strtok_r(NULL, "_", &stoksave);
+	ERRORRET(wgstartcp == NULL);
+
+	char * seqnocp = strtok_r(NULL, "_", &stoksave);
+	ERRORRET(seqnocp == NULL);
+
+	char * toolidcp = strtok_r(NULL, "_", &stoksave);
+	ERRORRET(toolidcp == NULL);
+
+	int toolid = atoi(toolidcp + 1);
+
+	std::map<const int, int> revisions;
+
+	char * sourcecp;
+	char * revisioncp;
+	int source;
+	int revision;
+	while ((sourcecp = strtok_r(NULL, "r", &stoksave)) != NULL
+	       && sourcecp[0] == 's'
+	       && (source = atoi(sourcecp + 1)) > 0
+	       && (revisioncp = strtok_r(NULL, "_", &stoksave)) != NULL
+	       && (revision = atoi(revisioncp)) > 0
+	    ) {
+	    revisions[source] = revision;
 	}
 
 	// Lets initially assume that the files are always in the
@@ -97,13 +120,27 @@ int assimilate_handler(
 
 	DB_SCOS_RESULT res;
 	res.create_time = canonical_result.received_time;
-//	res.revision = rev;
 	res.tool = toolid;
 	res.result = result;
 	strncpy(res.file, wu.name, 250);
 
 	res.insert();
 	// TODO: Error handler.
+
+	res.id = res.db->insert_id();
+
+	for (std::map<const int, int>::iterator it = revisions.begin();
+	     it != revisions.end();
+	     it++)
+	{
+	    DB_SCOS_RESULT_SOURCE dsrs;
+
+	    dsrs.source = (*it).first;
+	    dsrs.result = res.id;
+	    dsrs.revision = (*it).second;
+
+	    dsrs.insert();
+	}
 
 	return 0;
     }

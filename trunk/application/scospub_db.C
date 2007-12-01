@@ -197,23 +197,13 @@ void DB_SCOS_RESULT::db_parse(MYSQL_ROW& r)
 // db_print method for the scos_result table
 void DB_SCOS_RESULT_SOURCE::db_print(char* buf)
 {
-    char date2[2 * sizeof date];
-
-    safe_strcpy(date2, date);
-
-    ESCAPE(date2);
-
     sprintf(buf,
 	    "source=%d, "
 	    "result=%d, "
-	    "revision=%d, "
-	    "date='%s', "
-	    "active=%d, ",
+	    "revision=%d",
 	    source,
 	    result,
-	    revision,
-	    date2,
-	    active
+	    revision
 	);
 }
 
@@ -225,6 +215,4 @@ void DB_SCOS_RESULT_SOURCE::db_parse(MYSQL_ROW& r)
     source = atoi(r[i++]);
     result = atoi(r[i++]);
     revision = atoi(r[i++]);
-    strcpy2(date, r[i++]);
-    active = atoi(r[i++]);
 }
