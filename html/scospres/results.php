@@ -36,7 +36,7 @@ if (!$projid) {
 	    echo "
 		<tr>
 		  <th>".tr(SCOSP_TOOL)."</th>
-		  <th>".tr(SCOSP_REVISION)."</th>
+		  <th>".tr(SCOSP_SOURCE)."</th>
 		  <th>".tr(SCOSP_DATE)."</th>
 		  <th>".tr(SCOSP_RESULT)."</th>
 		</tr>
@@ -46,19 +46,18 @@ if (!$projid) {
         $r2 = mysql_query('SELECT '
 		. 'scos_tool.name AS name, '
 		. 'scos_tool.id AS toolid, '
-		. 'scos_result.revision AS revision, '
+		. 'scos_result.id AS id, '
 		. 'scos_result.date AS date, '
 		. 'scos_result.result AS result, '
 		. 'scos_result.file AS file '
 		. 'FROM scos_tool, scos_result '
 		. 'WHERE scos_tool.id = scos_result.tool '
 		. "AND project = $proj->id "
-		. 'ORDER BY scos_result.revision, scos_tool.name ');
+		. 'ORDER BY scos_tool.name ');
 	while ($res = mysql_fetch_object($r2)) {
 	    if ($xml) {
                 echo "  <result>\n";
                 echo "    <tool>$res->toolid</tool>\n";
-		echo "    <revision>$res->revision</revision>\n";
 		echo "    <status>$res->result</status>\n";
                 echo "  </result>\n";
             } else {
@@ -67,9 +66,20 @@ if (!$projid) {
 		       <td>
 			 $res->name
 		       </td>
-		       <td>
-			 $res->revision
-		       </td>
+		       <td>";
+
+		// TODO: Hardcoded for SVN
+		$r3 = mysql_query('SELECT '
+			. 'rooturl, revision '
+			. 'FROM scos_source, scos_result_source '
+			. 'WHERE scos_source.id = scos_result_source.source '
+			. "AND scos_result_source.result = $res->id "
+			. "GROUP BY rooturl");
+                while ($res3 = mysql_fetch_object($r3)) {
+			echo "$res3->rooturl $res3->revision <br>";
+		}
+		echo "
+	               </td>
 		       <td>
 			 $res->date
 		       </td>

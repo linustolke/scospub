@@ -44,8 +44,8 @@ msgstr "All projects."
 msgid "SCOSP_TOOL"
 msgstr "The tool"
 
-msgid "SCOSP_REVISION"
-msgstr "Revision"
+msgid "SCOSP_SOURCE"
+msgstr "Source"
 
 msgid "SCOSP_DATE"
 msgstr "Date"
