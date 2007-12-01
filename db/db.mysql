@@ -1,3 +1,9 @@
+drop table scos_result_source;
+drop table scos_result;
+drop table scos_tool;
+drop table scos_source;
+drop table scos_project;
+
 create table scos_project (
     id INTEGER NOT NULL AUTO_INCREMENT,
     UNIQUE KEY id (`id`),
@@ -13,12 +19,21 @@ create table scos_source (
     project INTEGER,
     FOREIGN KEY project (project) REFERENCES scos_project (id) ON DELETE CASCADE,
     type INTEGER, # 1 = Subversion, 2 = CVS, other...
+
+    # Static data
 	# Subversion
     url VARCHAR(256),
+    username VARCHAR(35),
+    password VARCHAR(35),
     rooturl VARCHAR(256),
     uuid VARCHAR(100),
 	# CVS: ...
 	# Other...
+
+    # Dynamic data
+	# Subversion
+    lastrevision INTEGER,
+
     active BOOL
 ) engine=innodb;
 

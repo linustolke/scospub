@@ -15,6 +15,7 @@ install-data-local:
 	$(INSTALL_PROGRAM) wrapper $(APPVERDIR)/wrapper_$(VERSION)_$(host)
 
 AM_CPPFLAGS = \
+    -fno-inline \
     -I$(BOINC_DIR) \
     -I$(BOINC_DIR)/api \
     -I$(BOINC_DIR)/lib \
@@ -36,6 +37,8 @@ wrapper_LDADD = \
     -lboinc_api \
     $(BOINC_LIB) \
     libstdc++.a
+
+scospub_work_generator_SOURCES = scospub_work_generator.C scospub_db.C
 
 scospub_work_generator_LDADD = \
     -L$(BOINC_DIR)/sched \

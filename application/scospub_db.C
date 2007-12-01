@@ -22,14 +22,14 @@ DB_SCOS_RESULT::DB_SCOS_RESULT(DB_CONN* dc) :
 DB_SCOS_RESULT_SOURCE::DB_SCOS_RESULT_SOURCE(DB_CONN* dc) :
     DB_BASE("scos_result_source", dc?dc:&boinc_db) {}
 
-int DB_SCOS_PROJECT::get_id() const {return id;}
-int DB_SCOS_SOURCE::get_id() const {return id;}
-int DB_SCOS_TOOL::get_id() const {return id;}
-int DB_SCOS_RESULT::get_id() const {return id;}
-int DB_SCOS_RESULT_SOURCE::get_id() const {return 0;}
+int DB_SCOS_PROJECT::get_id() {return id;}
+int DB_SCOS_SOURCE::get_id() {return id;}
+int DB_SCOS_TOOL::get_id() {return id;}
+int DB_SCOS_RESULT::get_id() {return id;}
+int DB_SCOS_RESULT_SOURCE::get_id() {return 0;}
 
 // db_print method for the scos_project table
-void DB_SCOS_PROJECT::db_print(char* buf) const
+void DB_SCOS_PROJECT::db_print(char* buf)
 {
     char name2[2 * sizeof name];
     char user_friendly_name2[2 * sizeof name];
@@ -62,17 +62,23 @@ void DB_SCOS_PROJECT::db_parse(MYSQL_ROW& r)
 }
 
 // db_print method for the scos_source table
-void DB_SCOS_SOURCE::db_print(char * buf) const
+void DB_SCOS_SOURCE::db_print(char * buf)
 {
     char url2[2 * sizeof url];
+    char username2[2 * sizeof username];
+    char password2[2 * sizeof password];
     char rooturl2[2 * sizeof rooturl];
     char uuid2[2 * sizeof uuid];
 
     safe_strcpy(url2, url);
+    safe_strcpy(username2, username);
+    safe_strcpy(password2, password);
     safe_strcpy(rooturl2, rooturl);
     safe_strcpy(uuid2, uuid);
 
     ESCAPE(url2);
+    ESCAPE(username2);
+    ESCAPE(password2);
     ESCAPE(rooturl2);
     ESCAPE(uuid2);
 
@@ -80,14 +86,21 @@ void DB_SCOS_SOURCE::db_print(char * buf) const
 	    "project=%d, "
 	    "type=%d, "
 	    "url='%s', "
+	    "username='%s', "
+	    "password='%s', "
 	    "rooturl='%s', "
 	    "uuid='%s', "
+	    "lastrevision=%d, "
 	    "active=%d",
+
 	    project,
 	    type,
 	    url2,
+	    username2,
+	    password2,
 	    rooturl2,
 	    uuid2,
+	    lastrevision,
 	    active);
 };
 
@@ -101,14 +114,17 @@ void DB_SCOS_SOURCE::db_parse(MYSQL_ROW& r)
     project = atoi(r[i++]);
     type = atoi(r[i++]);
     strcpy2(url, r[i++]);
+    strcpy2(username, r[i++]);
+    strcpy2(password, r[i++]);
     strcpy2(rooturl, r[i++]);
     strcpy2(uuid, r[i++]);
+    lastrevision = atoi(r[i++]);
     active = atoi(r[i++]);
 }
 
 
 // db_print method for the scos_tool table
-void DB_SCOS_TOOL::db_print(char* buf) const
+void DB_SCOS_TOOL::db_print(char* buf)
 {
     char name2[2 * sizeof name];
     char config2[2 * sizeof config];
@@ -144,7 +160,7 @@ void DB_SCOS_TOOL::db_parse(MYSQL_ROW& r)
 }
 
 // db_print method for the scos_result table
-void DB_SCOS_RESULT::db_print(char* buf) const
+void DB_SCOS_RESULT::db_print(char* buf)
 {
     char file2[2 * sizeof file];
 
@@ -179,7 +195,7 @@ void DB_SCOS_RESULT::db_parse(MYSQL_ROW& r)
 
 
 // db_print method for the scos_result table
-void DB_SCOS_RESULT_SOURCE::db_print(char* buf) const
+void DB_SCOS_RESULT_SOURCE::db_print(char* buf)
 {
     char date2[2 * sizeof date];
 
