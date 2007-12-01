@@ -130,9 +130,12 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
 
     DB_SCOS_SOURCE source;
 
+    char clause[100];
+    sprintf(clause, "WHERE project = %d", project.id);
+
     // Mapping a project to url
     f << "  <source>\n";
-    while (!source.enumerate()) {
+    while (!source.enumerate(clause)) {
 	f << "    <svn id='" << source.id << "'>\n";
 	f << "      <url>" << source.url << "</url>\n";
 	const char * checkoutdir = source.url + strlen(source.rooturl);
@@ -146,7 +149,7 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
     source.end_enumerate();
 
 
-    while (!source.enumerate()) {
+    while (!source.enumerate(clause)) {
 	const char * checkoutdir = source.url + strlen(source.rooturl);
 
 	f << "  <task>\n";
@@ -245,7 +248,7 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
         config
     );
 
-    while (!source.enumerate()) {
+    while (!source.enumerate(clause)) {
 	source.lastrevision = svn_revisions[source.id];
 	source.update();
     }
