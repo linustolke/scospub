@@ -87,21 +87,26 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
     // input files (any?)
 
     static int seqno = 1;
-    int urlid = 1;
 
     // make a unique name (for the job and its input file)
     //
     // This name is also used by the work assimilation to enter
     // the result in the correct way.
-    // TODO: Hardcoded Project, toolid, tool.
     char name[255];
     sprintf(name,
-	    "%s_%s-%d-%d_%d",
+	    "%s_%s_%d_%d_t%d",
 	    tool.name,
 	    project.name,
+	    start_time,
 	    seqno++,
-	    tool.id,
-	    start_time);
+	    tool.id);
+
+    for (revisions_map_type::iterator it = svn_revisions.begin();
+	 it != svn_revisions.end();
+	 it++)
+    {
+	sprintf(name, "%s_s%dr%d", name, (*it).first, (*it).second);
+    }
 
     // Create the input file.
     // Put it at the right place in the download dir hierarchy

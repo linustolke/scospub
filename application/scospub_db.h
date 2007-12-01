@@ -67,11 +67,8 @@ struct SCOS_RESULT_SOURCE {
     // Subversion
     int revision;
     // CVS
-    char date[256];
     // Other
     // ...
-
-    int active;
 
     void clear();
 };    

@@ -69,9 +69,7 @@ create table scos_result_source (
     FOREIGN KEY result (result) REFERENCES scos_result (id) ON DELETE CASCADE,
     
 	# Subversion
-    revision INTEGER,
-	# CVS
-    date VARCHAR(256),
+    revision INTEGER
+	# CVS...
 	# Other...
-    active BOOL
 ) engine=innodb;
