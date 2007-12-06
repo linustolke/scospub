@@ -53,3 +53,13 @@ msgstr "Date"
 msgid "SCOSP_RESULT"
 msgstr "Result"
 
+
+
+msgid "SCOSC_PROJECTNAME"
+msgstr "Name"
+
+msgid "SCOSC_SOURCES"
+msgstr "Source trees"
+
+msgid "SCOSC_UNKNOWN_TYPE"
+msgstr "Unknown type of source"

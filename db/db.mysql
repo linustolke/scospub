@@ -7,22 +7,22 @@ drop table scos_project;
 create table scos_project (
     id INTEGER NOT NULL AUTO_INCREMENT,
     UNIQUE KEY id (`id`),
-    name varchar(256),
+    name varchar(256) NOT NULL,
     UNIQUE KEY name (`name`),
     user_friendly_name varchar(256),
-    active BOOL
+    active BOOL NOT NULL DEFAULT FALSE
 ) engine=innodb;
 
 create table scos_source (
     id INTEGER NOT NULL AUTO_INCREMENT,
     UNIQUE KEY id (`id`),
-    project INTEGER,
+    project INTEGER NOT NULL,
     FOREIGN KEY project (project) REFERENCES scos_project (id) ON DELETE CASCADE,
     type INTEGER, # 1 = Subversion, 2 = CVS, other...
 
     # Static data
 	# Subversion
-    url VARCHAR(256),
+    url VARCHAR(256) NOT NULL,
     username VARCHAR(35),
     password VARCHAR(35),
     rooturl VARCHAR(256),
@@ -34,18 +34,19 @@ create table scos_source (
 	# Subversion
     lastrevision INTEGER NOT NULL DEFAULT '0',
 
-    active BOOL
+    valid enum('unknown', 'valid', 'invalid') NOT NULL DEFAULT 'unknown',
+    active BOOL NOT NULL DEFAULT FALSE
 ) engine=innodb;
 
 # One item for every configured tool in every project.
 create table scos_tool (
     id INTEGER NOT NULL AUTO_INCREMENT,
     UNIQUE KEY id (`id`),
-    project INTEGER,
+    project INTEGER NOT NULL,
     FOREIGN KEY project (project) REFERENCES scos_project (id) ON DELETE CASCADE,
-    name VARCHAR(256),
-    config VARCHAR(256),
-    active BOOL
+    name VARCHAR(256) NOT NULL,
+    config VARCHAR(256) NOT NULL,
+    active BOOL NOT NULL DEFAULT FALSE
 ) engine=innodb;
 
 create table scos_result (
@@ -53,18 +54,18 @@ create table scos_result (
     UNIQUE KEY id (`id`),
     create_time INTEGER,
     date DATETIME,
-    tool INTEGER,
+    tool INTEGER NOT NULL,
     FOREIGN KEY tool (tool) REFERENCES scos_tool (id) ON DELETE CASCADE,
     result INTEGER,
     file VARCHAR(256)
 ) engine=innodb;
 
 create table scos_result_source (
-    source INTEGER,
+    source INTEGER NOT NULL,
     KEY source (source),
     FOREIGN KEY source (source) REFERENCES scos_source (id) ON DELETE CASCADE,
 
-    result INTEGER,
+    result INTEGER NOT NULL,
     KEY result (result),
     FOREIGN KEY result (result) REFERENCES scos_result (id) ON DELETE CASCADE,
     

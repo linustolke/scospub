@@ -47,6 +47,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <string>
 #include <fstream>
 
@@ -75,6 +76,155 @@ int start_time;
 SCHED_CONFIG config;
 
 typedef std::map<const int, int> revisions_map_type;
+
+
+//
+// Class to fetch info from a subversion repository.
+//
+class svn_result
+{
+public:
+    svn_result(const char * url, const char * username, const char * password);
+
+    bool get_successful() const { return successful; };
+
+    const char * get_rooturl() const { return rooturl.c_str(); };
+    const char * get_uuid() const { return uuid.c_str(); };
+    int get_last_revision() const { return last_revision; };
+
+private:
+    bool successful;
+    std::string rooturl;
+    std::string uuid;
+    int last_revision;
+};
+
+svn_result::svn_result(const char * url, const char * username, const char * password)
+{
+    successful = false;
+    last_revision = -1;
+
+    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
+			"Polling %s\n",
+			url);
+
+    char tempfile[100];
+    strcpy(tempfile, "/tmp/scospubWG.XXXXXX");
+
+    char * filename = mktemp(tempfile);
+
+    // TODO: errorcheck!
+    std::string commandline;
+
+    // TODO: Hardcoded svn
+    commandline.append("svn info ");
+    commandline.append(url);
+    commandline.append(" --username '");
+    commandline.append(username);
+    commandline.append("' --password '");
+    commandline.append(password);
+    commandline.append("' > '");
+    commandline.append(filename);
+    commandline.append("' 2>&1");
+
+    int result = system(commandline.c_str());
+
+    if (result != 0)
+    {
+	log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
+			    "Cannot fetch data from %s. "
+			    "Error %d\n",
+			    url,
+			    result
+	    );
+
+	unlink(filename);
+	return;
+    }
+
+    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
+			"Fetching svn data from %s done\n",
+			url);
+
+    // Parse through the result
+    std::string line;
+
+    std::ifstream file(filename, std::ios::in);
+    // TODO: Error check
+
+    while (getline(file, line))
+    {
+#define SVN_LCR "Last Changed Rev: "
+	if (line.compare(0, strlen(SVN_LCR), SVN_LCR) == 0)
+	{
+	    std::string sub(line.substr(strlen(SVN_LCR)));
+	    last_revision = atoi(sub.c_str());
+	}
+
+#define SVN_ROOTURL "Repository Root: "
+	if (line.compare(0, strlen(SVN_ROOTURL), SVN_ROOTURL) == 0)
+	{
+	    rooturl = line.substr(strlen(SVN_ROOTURL));
+	}
+
+#define SVN_UUID "Repository UUID: "
+	if (line.compare(0, strlen(SVN_UUID), SVN_UUID) == 0)
+	{
+	    uuid = line.substr(strlen(SVN_UUID));
+	}
+    }
+    file.close();
+    unlink(filename);
+
+    if (last_revision > 0)
+    {
+	successful = true;
+    }
+}
+
+
+
+
+//
+// Process new SVN URLs
+void
+process_svn_urls()
+{
+    static time_t last = time(NULL);
+
+    // Don't do this more often than every three seconds.
+    if (last + 3 > time(NULL))
+    {
+	return;
+    }
+
+    time(&last);
+
+    DB_SCOS_SOURCE source;
+
+    while (!source.enumerate("WHERE valid='unknown'"))
+    {
+	svn_result res(source.url, source.username, source.password);
+
+	if (!res.get_successful())
+	{
+	    strcpy(source.valid, "invalid");
+	}
+	else
+	{
+	    strcpy(source.rooturl, res.get_rooturl());
+	    strcpy(source.uuid, res.get_uuid());
+
+	    strcpy(source.valid, "valid");
+	}
+
+	source.update();
+    }
+    source.end_enumerate();
+}
+
+
+
 
 
 // create one new job
@@ -131,7 +281,9 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
     DB_SCOS_SOURCE source;
 
     char clause[100];
-    sprintf(clause, "WHERE project = %d", project.id);
+    sprintf(clause,
+	    "WHERE project = %d AND active=true AND valid='valid'",
+	    project.id);
 
     // Mapping a project to url
     f << "  <source>\n";
@@ -255,6 +407,8 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
     source.end_enumerate();
 }
 
+
+
 void main_loop()
 {
     int retval;
@@ -265,6 +419,8 @@ void main_loop()
 
 	while (!project.enumerate("WHERE active = TRUE"))
 	{
+	    process_svn_urls();
+
 	    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
 				"Processing project %s\n", project.name
 		    );
@@ -277,9 +433,12 @@ void main_loop()
 	    revisions_map_type svn_revisions;
 
 	    int changes = 0;
+	    int errors = 0;
 
 	    char clause[100];
-	    sprintf(clause, "WHERE project = %d", project.id);
+	    sprintf(clause,
+		    "WHERE project = %d AND active = TRUE AND valid='valid'",
+		    project.id);
 
 	    while (!source.enumerate(clause))
 	    {
@@ -288,100 +447,50 @@ void main_loop()
 		    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
 					"Cannot handle source of type %d.\n",
 					source.type);
+		    errors++;
 		    continue;
 		}
 
-		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-				    "Polling %s for project %s\n",
-				    source.url,
-				    project.name
-		    );
+		svn_result res(source.url, source.username, source.password);
 
-		char tempfile[100];
-
-		strcpy(tempfile, "/tmp/scospubWG.XXXXXX");
-
-		char * filename = mktemp(tempfile);
-
-		// TODO: errorcheck!
-		std::string commandline;
-
-		// TODO: Hardcoded svn
-		commandline.append("svn info ");
-		commandline.append(source.url);
-		commandline.append(" --username '");
-		commandline.append(source.username);
-		commandline.append("' --password '");
-		commandline.append(source.password);
-		commandline.append("' > '");
-		commandline.append(filename);
-		commandline.append("' 2>&1");
-
-		int result = system(commandline.c_str());
-
-		if (result != 0)
+		if (!res.get_successful())
 		{
 		    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
-					"Cannot fetch data from %s. "
-					"Error %d\n",
+					"Cannot fetch SVN information for %s "
+					"(project %s).\n",
 					source.url,
-					result
-			);
-
-		    unlink(filename);
-
-		    sleep(1);
+					project.name);
+		    errors++;
 		    continue;
 		}
 
-		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-				    "Fetching svn data from %s (for project %s) done\n",
-				    source.url,
-				    project.name
-		    );
-
-
-		// Parse to get the Last Changed Rev.
-		std::string line;
-
-		std::ifstream file(filename, std::ios::in);
-		// TODO: Error check
-
-		// TODO: Hardcoded to svn
-		int foundrev = 0;
-		while (getline(file, line))
+		if (strcmp(source.rooturl, res.get_rooturl()))
 		{
-#define SVN_LCR "Last Changed Rev: "
-		    if (line.compare(0, strlen(SVN_LCR), SVN_LCR)
-			== 0)
-		    {
-			std::string sub(line.substr(strlen(SVN_LCR)));
-			foundrev = atoi(sub.c_str());
-			if (foundrev > 0)
-			{
-			    break;
-			}
-		    }
-		}
-		file.close();
-		unlink(filename);
-
-		if (foundrev == 0)
-		{
-		    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-					"No revision found for %s.\n",
-					source.url
-			);
-		    continue;
+		    log_messages.printf(SCHED_MSG_LOG::MSG_NORMAL,
+					"Rooturl changed from %s to %s.\n",
+					source.rooturl,
+					res.get_rooturl());
+		    strcpy(source.rooturl, res.get_rooturl());
+		    source.update();
 		}
 
-		svn_revisions[source.id] = foundrev;
+		if (strcmp(source.uuid, res.get_uuid()))
+		{
+		    log_messages.printf(SCHED_MSG_LOG::MSG_NORMAL,
+					"UUID changed from %s to %s.\n",
+					source.uuid,
+					res.get_uuid());
+		    strcpy(source.uuid, res.get_uuid());
+		    source.update();
+		}
 
-		if (foundrev <= source.lastrevision)
+		svn_revisions[source.id] = res.get_last_revision();
+
+		if (res.get_last_revision() <= source.lastrevision)
 		{
 		    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
 					"Revision %d is not newer than %d.\n",
-					foundrev,
+					res.get_last_revision(),
 					source.lastrevision
 			);
 		    continue;
@@ -390,31 +499,53 @@ void main_loop()
 	    }
 	    source.end_enumerate();
 
-	    if (changes > 0)
+	    if (errors == 0)
 	    {
-		// There are indeed changes to some of the sources.
-
-		DB_SCOS_TOOL tool;
-
-		while (!tool.enumerate(clause))
+		if (changes > 0)
 		{
-		    // Creat one job per tool.
-		    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-					"Creating job for %s %s %s.\n",
-					project.name, tool.name, tool.config
-			);
-		    make_job(project, tool, svn_revisions);
-		}
-	    }
+		    // There are indeed changes to some of the sources.
 
-	    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-				"Processing project %s done\n", project.name
+		    DB_SCOS_TOOL tool;
+
+		    char toolclause[100];
+		    sprintf(toolclause,
+			    "WHERE project = %d AND active = TRUE",
+			    project.id);
+
+		    while (!tool.enumerate(toolclause))
+		    {
+			// Creat one job per tool.
+			log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
+					    "Creating job for %s %s %s.\n",
+					    project.name,
+					    tool.name,
+					    tool.config
+			    );
+			make_job(project, tool, svn_revisions);
+		    }
+		}
+
+		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
+				    "Processing project %s done\n",
+				    project.name
 		    );
+	    }
 	}
 
 	// Wait a while between every polling.
 	// TODO: Tune this.
-	sleep(60);
+	process_svn_urls();
+	sleep(10);
+	process_svn_urls();
+	sleep(10);
+	process_svn_urls();
+	sleep(10);
+	process_svn_urls();
+	sleep(10);
+	process_svn_urls();
+	sleep(10);
+	process_svn_urls();
+	sleep(10);
     }
 }
 
