@@ -57,8 +57,8 @@ void DB_SCOS_PROJECT::db_parse(MYSQL_ROW& r)
     clear();
     id = atoi(r[i++]);
     strcpy2(name, r[i++]);
-    active = atoi(r[i++]);
     strcpy2(user_friendly_name, r[i++]);
+    active = atoi(r[i++]);
 }
 
 // db_print method for the scos_source table
@@ -69,18 +69,21 @@ void DB_SCOS_SOURCE::db_print(char * buf)
     char password2[2 * sizeof password];
     char rooturl2[2 * sizeof rooturl];
     char uuid2[2 * sizeof uuid];
+    char valid2[2 * sizeof valid];
 
     safe_strcpy(url2, url);
     safe_strcpy(username2, username);
     safe_strcpy(password2, password);
     safe_strcpy(rooturl2, rooturl);
     safe_strcpy(uuid2, uuid);
+    safe_strcpy(valid2, valid);
 
     ESCAPE(url2);
     ESCAPE(username2);
     ESCAPE(password2);
     ESCAPE(rooturl2);
     ESCAPE(uuid2);
+    ESCAPE(valid2);
 
     sprintf(buf,
 	    "project=%d, "
@@ -91,6 +94,7 @@ void DB_SCOS_SOURCE::db_print(char * buf)
 	    "rooturl='%s', "
 	    "uuid='%s', "
 	    "lastrevision=%d, "
+	    "valid='%s', "
 	    "active=%d",
 
 	    project,
@@ -101,6 +105,7 @@ void DB_SCOS_SOURCE::db_print(char * buf)
 	    rooturl2,
 	    uuid2,
 	    lastrevision,
+	    valid2,
 	    active);
 };
 
@@ -119,6 +124,7 @@ void DB_SCOS_SOURCE::db_parse(MYSQL_ROW& r)
     strcpy2(rooturl, r[i++]);
     strcpy2(uuid, r[i++]);
     lastrevision = atoi(r[i++]);
+    strcpy2(valid, r[i++]);
     active = atoi(r[i++]);
 }
 

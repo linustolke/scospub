@@ -1,3 +1,3 @@
 install-data-local:
-	mkdir -p $(PROJECT_DIR)/html/scospres
-	cp *.php $(PROJECT_DIR)/html/scospres
+	mkdir -p $(PROJECT_DIR)/html/scosconf
+	cp *.php $(PROJECT_DIR)/html/scosconf

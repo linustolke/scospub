@@ -19,13 +19,13 @@ if ($xml) {
     start_table();
     echo "
         <tr>
+          <th>".tr(SCOSC_PROJECTNAME)."</th>
           <th>".tr(SCOSP_THEPROJECT)."</th>
-          <th>".tr(SCOSP_NUM_REPORT)."</th>
-          <th>".tr(SCOSP_LAST_REPORT)."</th>
+          <th>".tr(SCOSC_SOURCES)."</th>
         </tr>
     ";
 }
-$result = mysql_query("select * from scos_project where active=1");
+$result = mysql_query("select * from scos_project");
 
 while ($proj = mysql_fetch_object($result)) {
     $friendly_name = $proj->user_friendly_name;
@@ -35,48 +35,48 @@ while ($proj = mysql_fetch_object($result)) {
     if ($xml) {
         echo "  <scos_project>\n";
         echo "    <id>$proj->id</id>\n";
+	echo "    <active>$proj->active</active>\n";
         echo "    <name>$proj->name</name>\n";
     } else {
         echo "
             <tr>
-              <td><a name='$proj->name'>$friendly_name</a></td>
+              <td><a name='$proj->name'>$proj->name</a>
+	";
+	if ($proj->active) {
+	    echo "(active)";
+	} else {
+	    echo "(not active)";
+	}
+	echo "
+	      </td>
+              <td>$friendly_name</td>
         ";
 
-	$r2 = mysql_query("SELECT count(*) as num "
-		. "FROM scos_result, scos_tool "
-		. "WHERE scos_result.tool = scos_tool.id "
-		. "AND project=$proj->id");
-	if ($av = mysql_fetch_object($r2)) {
-	   echo "
-		  <td>
-                    <a href='results.php?projid=$proj->id'>
-                      $av->num
-                    </a>
-                  </td>
-	   ";
-	} else {
-	   echo "
-		  <td>".tr(SCOSP_NO_RESULTS)."</td>
-	   ";
-	}
+	echo "
+	      <td>
+                <ul>
+	";
+	$r2 = mysql_query('SELECT * '
+		. 'FROM scos_source '
+		. "WHERE project = $proj->id");
 
-	$r3 = mysql_query("SELECT date "
-		. "FROM scos_result, scos_tool "
-		. "WHERE scos_result.tool = scos_tool.id "
-		. "AND project=$proj->id "
-		. "ORDER BY date DESC "
-		. "LIMIT 1");
-	if ($av = mysql_fetch_object($r3)) {
-	   echo "
-		  <td>$av->date</td>
-	   ";
+	while ($av = mysql_fetch_object($r2)) {
+	    echo "<li>";
+	    if ($proj->type == 1) {
+		echo "<a href='subversionsrc.php?$av->id'>";
+		echo tr(SCOSC_SVN_SOURCE_URL);
+		echo " $av->url</a>";
+            } else {
+		echo "".tr(SCOSC_UNKNOWN_TYPE)."";
+            }
+	    echo "</li>";
 	} else {
-	   echo "
-		  <td>".tr(SCOSP_NO_RESULTS)."</td>
-	   ";
+	    echo "
+	        <td>".tr(SCOSC_NO_SOURCE)."</td>
+	    ";
 	}
-
         echo "
+              </td>
             </tr>
         ";
     }

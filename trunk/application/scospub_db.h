@@ -30,6 +30,7 @@ struct SCOS_SOURCE {
     // Dynamic data
     int lastrevision;
 
+    char valid[10];
     int active;
 
     void clear();
