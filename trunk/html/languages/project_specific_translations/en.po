@@ -54,12 +54,38 @@ msgid "SCOSP_RESULT"
 msgstr "Result"
 
 
+msgid "SCOSC_TITLE"
+msgstr "Configuring the projects"
+
+msgid "SCOSC_DESCRIPTION"
+msgstr "$PROJECT provides for the following open source development projects."
+
+msgid "SCOSC_PROJECT_HELP"
+msgstr "A project needs at least one source and one tool to actually generate work to be done."
 
 msgid "SCOSC_PROJECTNAME"
 msgstr "Name"
 
+msgid "SCOSC_ACTIVE"
+msgstr "(active)"
+
+msgid "SCOSC_NOT_ACTIVE"
+msgstr "(not active)"
+
 msgid "SCOSC_SOURCES"
 msgstr "Source trees"
 
+msgid "SCOSC_TOOLS"
+msgstr "Configured tools"
+
+msgid "SCOSC_NO_SOURCE"
+msgstr "No source trees are defined"
+
 msgid "SCOSC_UNKNOWN_TYPE"
 msgstr "Unknown type of source"
+
+msgid "SCOSC_SVN_SOURCE_URL"
+msgstr "Subversion source at"
+
+msgid "SCOSC_NO_TOOL"
+msgstr "No tool is defined"

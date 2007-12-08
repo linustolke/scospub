@@ -13,8 +13,8 @@ if ($xml) {
     xml_header();
     echo "<scos_projects>\n";
 } else {
-    page_head(tr(SCOSP_TITLE));
-    echo tr(SCOSP_DESCRIPTION)."<br><br>
+    page_head(tr(SCOSC_TITLE));
+    echo tr(SCOSC_DESCRIPTION)."<p>
     ";
     start_table();
     echo "
@@ -22,6 +22,7 @@ if ($xml) {
           <th>".tr(SCOSC_PROJECTNAME)."</th>
           <th>".tr(SCOSP_THEPROJECT)."</th>
           <th>".tr(SCOSC_SOURCES)."</th>
+          <th>".tr(SCOSC_TOOLS)."</th>
         </tr>
     ";
 }
@@ -43,9 +44,9 @@ while ($proj = mysql_fetch_object($result)) {
               <td><a name='$proj->name'>$proj->name</a>
 	";
 	if ($proj->active) {
-	    echo "(active)";
+	    echo tr(SCOSC_ACTIVE);
 	} else {
-	    echo "(not active)";
+	    echo tr(SCOSC_NOT_ACTIVE);
 	}
 	echo "
 	      </td>
@@ -54,29 +55,70 @@ while ($proj = mysql_fetch_object($result)) {
 
 	echo "
 	      <td>
-                <ul>
 	";
 	$r2 = mysql_query('SELECT * '
 		. 'FROM scos_source '
 		. "WHERE project = $proj->id");
 
-	while ($av = mysql_fetch_object($r2)) {
-	    echo "<li>";
-	    if ($proj->type == 1) {
-		echo "<a href='subversionsrc.php?$av->id'>";
-		echo tr(SCOSC_SVN_SOURCE_URL);
-		echo " $av->url</a>";
-            } else {
-		echo "".tr(SCOSC_UNKNOWN_TYPE)."";
-            }
-	    echo "</li>";
-	} else {
+	if (mysql_numrows($r2) > 0) {
 	    echo "
-	        <td>".tr(SCOSC_NO_SOURCE)."</td>
+		<ul>
 	    ";
+	    while ($av = mysql_fetch_object($r2)) {
+		echo "<li>";
+		if ($av->type == 1) {
+		    echo "<a href='subversionsrc.php?source=$av->id'>";
+		    echo tr(SCOSC_SVN_SOURCE_URL);
+		    echo " $av->url</a>";
+		} else {
+		    echo "".tr(SCOSC_UNKNOWN_TYPE)."";
+		}
+		echo "</li>";
+	    }
+	    echo "
+		</ul>
+	    ";
+	} else {
+	    echo tr(SCOSC_NO_SOURCE);
 	}
         echo "
               </td>
+        ";
+
+	echo "
+	      <td>
+	";
+	$r3 = mysql_query('SELECT * '
+		. 'FROM scos_tool '
+		. "WHERE project = $proj->id");
+
+	if (mysql_numrows($r3) > 0) {
+	    echo "
+		<ul>
+	    ";
+	    while ($av = mysql_fetch_object($r3)) {
+		echo "<li>";
+		echo "<a href='projtool.php?tool=$av->id'>";
+		echo " $av->name</a>";
+		echo " $av->config ";
+		if ($av->active) {
+		    echo tr(SCOSC_ACTIVE);
+		} else {
+		    echo tr(SCOSC_NOT_ACTIVE);
+		}
+		echo "</li>";
+	    }
+	    echo "
+		</ul>
+	    ";
+	} else {
+	    echo tr(SCOSC_NO_TOOL);
+	}
+        echo "
+              </td>
+        ";
+
+        echo "
             </tr>
         ";
     }
@@ -95,6 +137,8 @@ if ($xml) {
     echo "</scos_projects>\n";
 } else {
     end_table();
+    echo tr(SCOSC_PROJECT_HELP)."<p>
+    ";
     page_tail();
 }
 ?>
