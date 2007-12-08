@@ -103,6 +103,31 @@ some locking or other protection mechanism
 is needed to allow
 multiple boinc clients.
 
+== The database ==
+
+Table scos_project: Project information. One line per project.
+Active controls if the project should be built or not.
+
+Table scos_tool: References to tools
+Immutable fields:
+  Connection to project,
+  Toolname,
+  Config.
+Active=true signify the current configuration for a project.
+Active=false signify historic information only available for reference.
+
+Table scos_source: References to source tree paths.
+All fields immutable except active.
+Active=true signify the current configuration for a project.
+Active=false signify historic information only available for reference.
+
+Table scos_result:
+One row for each reported result.
+Each result references a tool (active or passive).
+
+Each result references one or more sources tree paths and contains their
+version/date using a scos_result_source_reference table.
+
 = Other ideas =
 
 We should strive to create as small work packages as possible.
