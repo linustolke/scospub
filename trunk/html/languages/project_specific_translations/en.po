@@ -66,6 +66,9 @@ msgstr "A project needs at least one source and one tool to actually generate wo
 msgid "SCOSC_PROJECTNAME"
 msgstr "Name"
 
+msgid "SCOSC_NO_PROJECTS"
+msgstr "There are no projects."
+
 msgid "SCOSC_ACTIVE"
 msgstr "(active)"
 
@@ -89,3 +92,18 @@ msgstr "Subversion source at"
 
 msgid "SCOSC_NO_TOOL"
 msgstr "No tool is defined"
+
+msgid "SCOSC_CONFIG_TOOLS"
+msgstr "[Configure tools]"
+
+msgid "SCOSC_CONFIGURE_TOOLS_DESCRIPTION"
+msgstr "These tools are configured for the project."
+
+msgid "SCOSC_TOOLS_NOT_AVAILABLE"
+msgstr "The following tools are configured but no longer available in this SCOSPUB setup."
+
+msgid "SCOSC_TOOLS_CONFIG_NOT_AVAILABLE"
+msgstr "The following configuration is configured but no longer available for this tool in this SCOSPUB setup."
+
+msgid "SCOSC_TOOL_NOT_ENABLED"
+msgstr "Not enabled"
