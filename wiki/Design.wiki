@@ -105,10 +105,11 @@ multiple boinc clients.
 
 == The database ==
 
-Table scos_project: Project information. One line per project.
+=== Table scos_project: Project information ===
+One line per project.
 Active controls if the project should be built or not.
 
-Table scos_tool: References to tools
+=== Table scos_tool: References to tools ===
 Immutable fields:
   Connection to project,
   Toolname,
@@ -116,12 +117,15 @@ Immutable fields:
 Active=true signify the current configuration for a project.
 Active=false signify historic information only available for reference.
 
-Table scos_source: References to source tree paths.
+Templates for allowed tools are entered with connection to project as 0.
+Active then means available or not.
+
+=== Table scos_source: References to source tree paths ===
 All fields immutable except active.
 Active=true signify the current configuration for a project.
 Active=false signify historic information only available for reference.
 
-Table scos_result:
+=== Table scos_result ===
 One row for each reported result.
 Each result references a tool (active or passive).
 
