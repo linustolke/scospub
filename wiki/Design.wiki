@@ -109,6 +109,8 @@ multiple boinc clients.
 One line per project.
 Active controls if the project should be built or not.
 
+Project 1 is a dummy template project.
+
 === Table scos_tool: References to tools ===
 Immutable fields:
   Connection to project,
@@ -117,7 +119,7 @@ Immutable fields:
 Active=true signify the current configuration for a project.
 Active=false signify historic information only available for reference.
 
-Templates for allowed tools are entered with connection to project as 0.
+Templates for allowed tools are entered with connection to project as 1.
 Active then means available or not.
 
 === Table scos_source: References to source tree paths ===
