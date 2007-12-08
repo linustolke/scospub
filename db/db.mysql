@@ -12,6 +12,8 @@ create table scos_project (
     user_friendly_name varchar(256),
     active BOOL NOT NULL DEFAULT FALSE
 ) engine=innodb;
+INSERT INTO scos_project
+  SET id=1, name='Template', user_friendly_name='Dummy template project', active=false;
 
 create table scos_source (
     id INTEGER NOT NULL AUTO_INCREMENT,
