@@ -56,7 +56,7 @@ while ($tool = mysql_fetch_object($result)) {
 mysql_free_result($result);
 
 
-echo "<FORM METHOD='get' action=''>
+echo "<FORM METHOD='get' ACTION=''>
 ";
 echo "<INPUT type='hidden' name='project' value='$projid'>
 ";

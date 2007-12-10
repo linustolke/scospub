@@ -44,8 +44,8 @@ if (mysql_numrows($result) > 0) {
 	    echo "    <name>$proj->name</name>\n";
 	} else {
 	    echo "
-		<tr>
-		  <td><a name='proj$proj->id'>$proj->name</a>
+		<TR>
+		  <TD><A NAME='proj$proj->id' HREF='configproject.php?project=$proj->id'>$proj->name</A>
 	    ";
 	    if ($proj->active) {
 		echo tr(SCOSC_ACTIVE);
@@ -53,12 +53,12 @@ if (mysql_numrows($result) > 0) {
 		echo tr(SCOSC_NOT_ACTIVE);
 	    }
 	    echo "
-		  </td>
-		  <td>$friendly_name</td>
+		  </TD>
+		  <TD>$friendly_name</TD>
 	    ";
 
 	    echo "
-		  <td>
+		  <TD>
 	    ";
 	    $r2 = mysql_query('SELECT * '
 		    . 'FROM scos_source '
@@ -66,31 +66,34 @@ if (mysql_numrows($result) > 0) {
 
 	    if (mysql_numrows($r2) > 0) {
 		echo "
-		    <ul>
+		    <UL>
 		";
 		while ($av = mysql_fetch_object($r2)) {
-		    echo "<li>";
+		    echo "<LI>";
 		    if ($av->type == 1) {
-			echo "<a href='subversionsrc.php?source=$av->id'>";
+			echo "<A HREF='subversionsrc.php?source=$av->id'>";
 			echo tr(SCOSC_SVN_SOURCE_URL);
-			echo " $av->url</a>";
+			echo " $av->url</A>";
 		    } else {
 			echo "".tr(SCOSC_UNKNOWN_TYPE)."";
 		    }
-		    echo "</li>";
+		    echo "</LI>";
 		}
 		echo "
-		    </ul>
+		    </UL>
 		";
 	    } else {
 		echo tr(SCOSC_NO_SOURCE);
 	    }
+            echo "<BR>
+	    <A HREF='configsource.php'>".tr(SCOSC_ADD_SOURCE)."</A>
+	    ";
 	    echo "
-		  </td>
+		  </TD>
 	    ";
 
 	    echo "
-		  <td>
+		  <TD>
 	    ";
 	    $r3 = mysql_query('SELECT * '
 		    . 'FROM scos_tool '
@@ -99,12 +102,12 @@ if (mysql_numrows($result) > 0) {
 
 	    if (mysql_numrows($r3) > 0) {
 		echo "
-		    <ul>
+		    <UL>
 		";
 		while ($av = mysql_fetch_object($r3)) {
-		    echo "<li>";
-		    echo "<a href='configtools.php?project=$proj->id'>
-			".tr(SCOSC_CONFIG_TOOLS)."</a>
+		    echo "<LI>";
+		    echo "<A HREF='configtools.php?project=$proj->id'>
+			".tr(SCOSC_CONFIG_TOOLS)."</A>
 		    ";
 		    echo " $av->name";
 		    echo " $av->config ";
@@ -113,22 +116,22 @@ if (mysql_numrows($result) > 0) {
 		    } else {
 			echo tr(SCOSC_NOT_ACTIVE);
 		    }
-		    echo "</li>";
+		    echo "</LI>";
 		}
 		echo "
-		    </ul>
+		    </UL>
 		";
 	    } else {
-		echo "<a href='configtools.php?project=$proj->id'>"
-		    .tr(SCOSC_NO_TOOL)."</a>
+		echo "<A HREF='configtools.php?project=$proj->id'>"
+		    .tr(SCOSC_NO_TOOL)."</A>
 		";
 	    }
 	    echo "
-		  </td>
+		  </TD>
 	    ";
 
 	    echo "
-		</tr>
+		</TR>
 	    ";
 	}
 
@@ -136,7 +139,7 @@ if (mysql_numrows($result) > 0) {
 	    echo "  </scos_project>\n";
 	} else {
 	    echo "
-		</tr>
+		</TR>
 	    ";
 	}
     }
@@ -148,7 +151,7 @@ if (mysql_numrows($result) > 0) {
 	end_table();
     }
 } else {
-    echo tr(SCOSC_NO_PROJECTS)."<p>
+    echo tr(SCOSC_NO_PROJECTS)."<P>
     ";
 }
 
@@ -156,6 +159,9 @@ if ($xml) {
 } else {
     echo tr(SCOSC_PROJECT_HELP)."<p>
     ";
+
+    echo "<A HREF='configproject.php'>".tr(SCOSC_NEW_PROJECT)."</A>";
+
     page_tail();
 }
 ?>

@@ -13,28 +13,28 @@ create table scos_project (
     active BOOL NOT NULL DEFAULT FALSE
 ) engine=innodb;
 INSERT INTO scos_project
-  SET id=1, name='Template', user_friendly_name='Dummy template project', active=false;
+    SET id=1, name='Template', user_friendly_name='Dummy template project',
+    active=false;
 
 create table scos_source (
     id INTEGER NOT NULL AUTO_INCREMENT,
     UNIQUE KEY id (`id`),
     project INTEGER NOT NULL,
     FOREIGN KEY project (project) REFERENCES scos_project (id) ON DELETE CASCADE,
-    type INTEGER, # 1 = Subversion, 2 = CVS, other...
+    type INTEGER NOT NULL, # 1 = Subversion, 2 = CVS, other...
 
-    # Static data
-	# Subversion
-    url VARCHAR(256) NOT NULL,
+    # Subversion
+	# Static data
+    url VARCHAR(256),
     username VARCHAR(35),
     password VARCHAR(35),
     rooturl VARCHAR(256),
     uuid VARCHAR(100),
+	# Dynamic data
+    lastrevision INTEGER DEFAULT '0',
+
 	# CVS: ...
 	# Other...
-
-    # Dynamic data
-	# Subversion
-    lastrevision INTEGER NOT NULL DEFAULT '0',
 
     valid enum('unknown', 'valid', 'invalid') NOT NULL DEFAULT 'unknown',
     active BOOL NOT NULL DEFAULT FALSE
@@ -71,8 +71,8 @@ create table scos_result_source (
     KEY result (result),
     FOREIGN KEY result (result) REFERENCES scos_result (id) ON DELETE CASCADE,
     
-	# Subversion
+    # Subversion
     revision INTEGER
-	# CVS...
-	# Other...
+    # CVS...
+    # Other...
 ) engine=innodb;
