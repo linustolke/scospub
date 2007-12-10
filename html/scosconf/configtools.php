@@ -7,9 +7,34 @@ require_once("../inc/translation.inc");
 init_session();
 db_init();
 
-page_head(tr(SCOSC_TITLE));
-
 $projid=$_REQUEST["project"];
+
+$commit = 0;
+
+$result = mysql_query("SELECT name FROM scos_tool "
+	. "WHERE project=1 AND active=1 GROUP BY name");
+while ($tool = mysql_fetch_object($result)) {
+    $value = $_REQUEST[$tool->name];
+    if ($value) {
+        mysql_query("DELETE FROM scos_tool "
+	    . "WHERE name='$tool->name' AND project=$projid");
+	if ($value != "off") {
+	    mysql_query("INSERT INTO scos_tool "
+		. "SET project='$projid', name='$tool->name', config='$value', active=1");
+	}
+
+	$commit++;
+    }
+}
+
+if ($commit > 0) {
+    header("Location: projects.php#proj$projid");
+    exit;
+}
+
+
+
+page_head(tr(SCOSC_TITLE));
 
 $result = mysql_query("SELECT * FROM scos_project WHERE id=$projid");
 $proj = mysql_fetch_object($result);
@@ -30,6 +55,11 @@ while ($tool = mysql_fetch_object($result)) {
 }
 mysql_free_result($result);
 
+
+echo "<FORM METHOD='get' action=''>
+";
+echo "<INPUT type='hidden' name='project' value='$projid'>
+";
 echo "<UL>
 ";
 
@@ -78,6 +108,10 @@ while ($tool = mysql_fetch_object($result)) {
 mysql_free_result($result);
 
 echo "</UL>
+";
+echo "<INPUT type='submit' value='Submit'/>
+";
+echo "</FORM>
 ";
 
 
