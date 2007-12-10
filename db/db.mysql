@@ -76,3 +76,9 @@ create table scos_result_source (
     # CVS...
     # Other...
 ) engine=innodb;
+
+
+# Create the list of tools:
+INSERT INTO scos_tool
+    SET project=1, name='checkstyle', config='sunchecks', active=true;
+
