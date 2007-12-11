@@ -30,14 +30,15 @@ _autosetup
   # Install the boinc server part.
   # Configure the project:
 {{{
-./configure -C --with-boinc=`pwd`/../boinc
+./configure -C --with-boinc=`pwd`/../boinc --with-project=/where/you/installed/the/boinc/server/project
 make
 make install
 }}}
 
 = Prerequisites =
 
-Sofar no prerequisites except the ones already used by boinc are identified.
+  # Same prerequisites as used by boinc server.
+  # subversion client installed and network connection available.
 
 = Notes =
 
