@@ -30,20 +30,19 @@ if ($_REQUEST["active"]) {
 $type=1;
 
 if ($url && $url != "") {
-    if (!$id) {
-	mysql_query("INSERT INTO scos_source "
-	    . "SET project='$project', type=$type, "
-	    . "url='$url', username='$username', password='$password', "
-	    . "valid='unknown', active=1");
-	$result = mysql_query("SELECT LAST_INSERT_ID() AS id");
-	$id = mysql_fetch_object($result)->id;
-    } else {
+    if ($id) {
 	mysql_query("UPDATE scos_source "
-	    . "SET project='$project', type=$type, "
-	    . "url='$url', username='$username', password='$password', "
-	    . "valid='unknown', active=$active "
+	    . "SET active=false "
 	    . "WHERE id=$id");
     }
+
+    mysql_query("INSERT INTO scos_source "
+	. "SET project='$project', type=$type, "
+	. "url='$url', username='$username', password='$password', "
+	. "valid='unknown', active=1");
+    $result = mysql_query("SELECT LAST_INSERT_ID() AS id");
+    $id = mysql_fetch_object($result)->id;
+
     header("Location: ?project=$project&id=$id");
     exit;
 } else {
