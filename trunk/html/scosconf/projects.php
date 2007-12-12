@@ -27,8 +27,8 @@ if (mysql_numrows($result) > 0) {
 	    <tr>
 	      <th>".tr(SCOSC_PROJECTNAME)."</th>
 	      <th>".tr(SCOSP_THEPROJECT)."</th>
-	      <th>".tr(SCOSC_SOURCES)."</th>
-	      <th>".tr(SCOSC_TOOLS)."</th>
+	      <th>".tr(SCOSC_SOURCES)."<br>
+	      ".tr(SCOSC_TOOLS)."</th>
 	    </tr>
 	";
     }
@@ -45,7 +45,11 @@ if (mysql_numrows($result) > 0) {
 	} else {
 	    echo "
 		<TR>
-		  <TD><A NAME='proj$proj->id' HREF='configproject.php?project=$proj->id'>$proj->name</A>
+		  <TD VALIGN='TOP' ROWSPAN='2'>
+                    <A NAME='proj$proj->id' 
+                       HREF='configproject.php?project=$proj->id'>
+                      $proj->name
+                    </A>
 	    ";
 	    if ($proj->active) {
 		echo tr(SCOSC_ACTIVE);
@@ -54,11 +58,11 @@ if (mysql_numrows($result) > 0) {
 	    }
 	    echo "
 		  </TD>
-		  <TD>$friendly_name</TD>
+		  <TD VALIGN='TOP' ROWSPAN='2'>$friendly_name</TD>
 	    ";
 
 	    echo "
-		  <TD>
+		  <TD VALIGN='TOP'>
 	    ";
 	    $r2 = mysql_query('SELECT * '
 		    . 'FROM scos_source '
@@ -69,14 +73,23 @@ if (mysql_numrows($result) > 0) {
 		    <UL>
 		";
 		while ($av = mysql_fetch_object($r2)) {
+		    // TODO: Change colors to notify invalid and unknown.
 		    echo "<LI>";
+
 		    if ($av->type == 1) {
-			echo "<A HREF='subversionsrc.php?source=$av->id'>";
+			echo "<A HREF='configsource.php?project=$proj->id&id=$av->id'>";
 			echo tr(SCOSC_SVN_SOURCE_URL);
-			echo " $av->url</A>";
+			echo " $av->url</A> ($av->valid) ";
 		    } else {
-			echo "".tr(SCOSC_UNKNOWN_TYPE)."";
+			echo "".tr(SCOSC_UNKNOWN_TYPE)." ";
 		    }
+
+		    if ($av->active) {
+			echo tr(SCOSC_ACTIVE);
+		    } else {
+			echo tr(SCOSC_NOT_ACTIVE);
+		    }
+
 		    echo "</LI>";
 		}
 		echo "
@@ -86,14 +99,18 @@ if (mysql_numrows($result) > 0) {
 		echo tr(SCOSC_NO_SOURCE);
 	    }
             echo "<BR>
-	    <A HREF='configsource.php'>".tr(SCOSC_ADD_SOURCE)."</A>
+	          <A HREF='configsource.php?project=$proj->id'>"
+		.tr(SCOSC_ADD_SOURCE)
+		."</A>
 	    ";
 	    echo "
 		  </TD>
+                </TR>
 	    ";
 
 	    echo "
-		  <TD>
+                <TR>
+		  <TD VALIGN='TOP'>
 	    ";
 	    $r3 = mysql_query('SELECT * '
 		    . 'FROM scos_tool '

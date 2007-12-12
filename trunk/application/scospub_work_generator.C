@@ -118,6 +118,8 @@ svn_result::svn_result(const char * url, const char * username, const char * pas
 
     // TODO: Hardcoded svn
     commandline.append("svn info ");
+    commandline.append("--no-auth-cache ");
+    commandline.append("--non-interactive ");
     commandline.append(url);
     commandline.append(" --username '");
     commandline.append(username);
@@ -126,6 +128,7 @@ svn_result::svn_result(const char * url, const char * username, const char * pas
     commandline.append("' > '");
     commandline.append(filename);
     commandline.append("' 2>&1");
+    commandline.append(" </dev/null");
 
     int result = system(commandline.c_str());
 
