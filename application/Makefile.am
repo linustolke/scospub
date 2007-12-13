@@ -4,7 +4,10 @@ RUNAPP=wrapper
 APPDIR = $(PROJECT_DIR)/apps/$(RUNAPP)
 APPVERDIR = $(APPDIR)/$(RUNAPP)_$(VERSION)_$(host)
 
-noinst_PROGRAMS = wrapper scospub_work_generator scospub_assimilator
+noinst_PROGRAMS = wrapper \
+	scospubapp \
+	scospub_work_generator \
+	scospub_assimilator
 install-data-local:
 	$(INSTALL_PROGRAM) scospub_work_generator $(PROJECT_DIR)/bin
 	$(INSTALL_PROGRAM) scospub_assimilator $(PROJECT_DIR)/bin
@@ -33,6 +36,17 @@ wrapper_LFLAGS = \
     -pthread
 
 wrapper_LDADD = \
+    -L$(BOINC_DIR)/api \
+    -lboinc_api \
+    $(BOINC_LIB) \
+    libstdc++.a
+
+scospubapp_SOURCES = scospubapp.C
+
+scospubapp_LFLAGS = \
+    -pthread
+
+scospubapp_LDADD = \
     -L$(BOINC_DIR)/api \
     -lboinc_api \
     $(BOINC_LIB) \
