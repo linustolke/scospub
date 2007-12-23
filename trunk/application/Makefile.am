@@ -12,10 +12,7 @@ install-data-local:
 	$(INSTALL_PROGRAM) scospub_work_generator $(PROJECT_DIR)/bin
 	$(INSTALL_PROGRAM) scospub_assimilator $(PROJECT_DIR)/bin
 	mkdir -p $(APPVERDIR)
-	for file in $(FILES); do \
-	  $(INSTALL_SCRIPT) $${file} $(APPVERDIR)/$${file}=$${file}_$(VERSION)_$(host); \
-	done
-	$(INSTALL_PROGRAM) wrapper $(APPVERDIR)/wrapper_$(VERSION)_$(host)
+	$(INSTALL_PROGRAM) scospubapp $(APPVERDIR)/scospubapp_$(VERSION)_$(host)
 
 AM_CPPFLAGS = \
     -fno-inline \

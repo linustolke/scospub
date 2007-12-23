@@ -51,29 +51,32 @@
 #include "util.h"
 #include "error_numbers.h"
 
-#define JOB_FILENAME "job.xml"
+#include "scospub_xml_tags.h"
+
+#define JOB_FILENAME "sc.xml"
 #define CHECKPOINT_FILENAME "checkpoint.txt"
 
 using std::vector;
 using std::string;
 
-class TASK {
-private:
+double final_cpu_time = 0.0;
+double checkpoint_cpu = 0.0;
 
+class TASK {
 public:
+    virtual const char * get_application() const = 0;
+
     virtual int parse(XML_PARSER&) = 0;
     virtual bool poll(int& status) = 0;
-    virtual int run(int argc, char** argv) = 0;
+    virtual int run() = 0;
     virtual void kill() = 0;
     virtual void stop() = 0;
     virtual void resume() = 0;
-    virtual double cpu_time() = 0;
+    virtual double get_current_cpu_time() = 0;
 };
 
 class shellTASK : public TASK {
-    double final_cpu_time;
-    double starting_cpu;
-        // how much CPU time was used by tasks before this in the job file
+private:
     string application;
     string stdin_filename;
     string stdout_filename;
@@ -86,48 +89,218 @@ class shellTASK : public TASK {
     int pid;
 #endif
 
+protected:
+    void set_application(const char * str) { application = str; }
+    void set_command_line(const char * str) { command_line = str; }
+
 public:
-    shellTASK();
+    virtual const char * get_application() const { return application.c_str(); }
 
     virtual int parse(XML_PARSER&);
-    virtual int run(int argc, char** argv);
+    virtual int run();
     virtual bool poll(int& status);
     virtual void kill();
     virtual void stop();
     virtual void resume();
-    virtual double cpu_time();
+    virtual double get_current_cpu_time();
 };
 
-vector<TASK*> tasks;
+
+class source : public shellTASK
+{
+private:
+    string id;
+
+public:
+    virtual void fix() = 0;
+};
+
+class svn_source : public source
+{
+private:
+    string url;
+    string checkoutdir;
+    string username;
+    string password;
+    int revision;
+
+public:
+    virtual int parse(XML_PARSER&);
+    virtual void fix();
+};
+
+class sources
+{
+private:
+    vector<source*> sources;
+
+public:
+    void push_back_all(vector<TASK*>& tasks) const {
+	for (vector<source*>::const_iterator iter = sources.begin(); 
+	    iter != sources.end();
+	    iter++)
+	{
+	    (*iter)->fix();
+	    tasks.push_back(*iter);
+	}
+    }
+
+    virtual int parse(XML_PARSER&);
+};
+
+
+class job_type
+{
+private:
+    string project_name;
+    string tool;
+    string toolid;
+    string config;
+    
+    int ntasks;
+    double cpu;
+
+    vector<TASK*> tasks;
+    
+public:
+    int parse();
+
+    void run();
+};
+
 
 bool app_suspended = false;
 
-shellTASK::shellTASK() {
-    final_cpu_time = 0;
-}
 
-int shellTASK::parse(XML_PARSER& xp) {
+// Parse a svn source entry
+int svn_source::parse(XML_PARSER& xp)
+{
     char tag[1024];
     bool is_tag;
 
-    while (!xp.get(tag, sizeof(tag), is_tag)) {
-        if (!is_tag) {
-            fprintf(stderr, "SCHED_CONFIG::parse(): unexpected text %s\n", tag);
+    while (!xp.get(tag, sizeof(tag), is_tag))
+    {
+        if (!is_tag)
+	{
+            fprintf(stderr,
+		    "SCHED_CONFIG::parse(): unexpected text %s in "
+		    TAG_SVN "\n",
+		    tag);
             continue;
         }
-        if (!strcmp(tag, "/task")) {
+
+	if (!strcmp(tag, "/" TAG_SVN))
+	{
+	    return 0;
+	}
+	else if (xp.parse_string(tag, TAG_URL, url))
+	    continue;
+	else if (xp.parse_string(tag, TAG_CHECKOUTDIR, checkoutdir))
+	    continue;
+	else if (xp.parse_string(tag, TAG_USERNAME, username))
+	    continue;
+	else if (xp.parse_string(tag, TAG_PASSWORD, password))
+	    continue;
+	else if (xp.parse_int(tag, TAG_REVISION, revision))
+	    continue;
+
+	fprintf(stderr,
+		"SCHED_CONFIG::parse(): unexpected tag %s in " TAG_SVN ".\n",
+		tag);
+    }
+}
+
+
+void svn_source::fix()
+{
+    set_application("/usr/bin/svn");
+    set_command_line("co -r blablabla");
+}
+
+
+// Parse the source
+int sources::parse(XML_PARSER& xp)
+{
+    char tag[1024];
+    bool is_tag;
+
+    while (!xp.get(tag, sizeof(tag), is_tag))
+    {
+        if (!is_tag)
+	{
+            fprintf(stderr,
+		    "SCHED_CONFIG::parse(): unexpected text %s in "
+		    TAG_SOURCE "\n",
+		    tag);
+            continue;
+        }
+
+        if (!strcmp(tag, "/" TAG_SOURCE))
+	{
             return 0;
         }
-        else if (xp.parse_string(tag, "application", application)) continue;
-        else if (xp.parse_string(tag, "stdin_filename", stdin_filename)) continue;
-        else if (xp.parse_string(tag, "stdout_filename", stdout_filename)) continue;
-        else if (xp.parse_string(tag, "stderr_filename", stderr_filename)) continue;
-        else if (xp.parse_string(tag, "command_line", command_line)) continue;
+	else if (!strcmp(tag, TAG_SVN))
+	{
+	    svn_source * source = new svn_source();
+	    int retval = source->parse(xp);
+	    if (!retval) {
+		sources.push_back(source);
+	    }
+	    else
+	    {
+		delete(source);
+		break;
+	    }
+	    continue;
+	}
+	// else if (!strcmp(tag, TAG_CVS)) ...
+
+	fprintf(stderr,
+		"SCHED_CONFIG::parse(): unexpected tag %s in " TAG_SOURCE ".\n",
+		tag);
+		
     }
     return ERR_XML_PARSE;
 }
 
-int parse_job_file() {
+// Parse a task!
+int shellTASK::parse(XML_PARSER& xp)
+{
+    char tag[1024];
+    bool is_tag;
+
+    while (!xp.get(tag, sizeof(tag), is_tag))
+    {
+        if (!is_tag)
+	{
+            fprintf(stderr,
+		    "SCHED_CONFIG::parse(): unexpected text %s\n", tag);
+            continue;
+        }
+        if (!strcmp(tag, "/" TAG_TASK))
+	{
+            return 0;
+        }
+        else if (xp.parse_string(tag, TAG_APPLICATION, application))
+	    continue;
+        else if (xp.parse_string(tag, TAG_STDIN_FILENAME, stdin_filename))
+	    continue;
+        else if (xp.parse_string(tag, TAG_STDOUT_FILENAME, stdout_filename))
+	    continue;
+        else if (xp.parse_string(tag, TAG_STDERR_FILENAME, stderr_filename))
+	    continue;
+        else if (xp.parse_string(tag, TAG_COMMAND_LINE, command_line))
+	    continue;
+
+	fprintf(stderr,
+		"SCHED_CONFIG::parse(): unexpected tag %s\n", tag);
+    }
+    return ERR_XML_PARSE;
+}
+
+// Parse a file
+// If <task> is found, it transfers control to shellTASK->parse()
+int job_type::parse() {
     MIOFILE mf;
     char tag[1024], buf[256];
     bool is_tag;
@@ -142,22 +315,63 @@ int parse_job_file() {
     XML_PARSER xp(&mf);
 
 
-    if (!xp.parse_start("job_desc")) return ERR_XML_PARSE;
-    while (!xp.get(tag, sizeof(tag), is_tag)) {
-        if (!is_tag) {
-            fprintf(stderr, "SCHED_CONFIG::parse(): unexpected text %s\n", tag);
+    if (!xp.parse_start(JOB_TAG)) return ERR_XML_PARSE;
+    while (!xp.get(tag, sizeof(tag), is_tag))
+    {
+        if (!is_tag)
+	{
+            fprintf(stderr,
+		    "SCHED_CONFIG::parse(): unexpected text %s\n", tag);
             continue;
         }
-        if (!strcmp(tag, "/job_desc")) {
+        if (!strcmp(tag, "/" JOB_TAG))
+	{
             return 0;
         }
-        if (!strcmp(tag, "task")) {
+
+        if (!strcmp(tag, TAG_TASK))
+	{
             shellTASK * task = new shellTASK();
             int retval = task->parse(xp);
             if (!retval) {
                 tasks.push_back(task);
             }
+	    else
+	    {
+		delete(task);
+		break;
+	    }
+
+	    continue;
         }
+	else if (xp.parse_string(tag, TAG_PROJECT, project_name))
+	    continue;
+	else if (xp.parse_string(tag, TAG_TOOL, tool))
+	    continue;
+	else if (xp.parse_string(tag, TAG_TOOLID, toolid))
+	    continue;
+	else if (xp.parse_string(tag, TAG_CONFIG, config))
+	    continue;
+	else if (!strcmp(tag, TAG_SOURCE))
+	{
+	    sources * src = new sources();
+	    int retval = src->parse(xp);
+            if (!retval) {
+                src->push_back_all(tasks);
+            }
+	    else
+	    {
+		delete(src);
+		break;
+	    }
+
+	    continue;
+	}
+	// TODO: Maybe more xml entries.
+
+	fprintf(stderr,
+		"SCHED_CONFIG::parse(): unexpected tag %s in " JOB_TAG ".\n",
+		tag);
     }
     return ERR_XML_PARSE;
 }
@@ -167,66 +381,51 @@ int parse_job_file() {
 // We need to use CreateFile() to get them.  Ugh.
 //
 HANDLE win_fopen(const char* path, const char* mode) {
-	SECURITY_ATTRIBUTES sa;
-	memset(&sa, 0, sizeof(sa));
-	sa.nLength = sizeof(sa);
-	sa.bInheritHandle = TRUE;
+    SECURITY_ATTRIBUTES sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.nLength = sizeof(sa);
+    sa.bInheritHandle = TRUE;
 
-	if (!strcmp(mode, "r")) {
-		return CreateFile(
-			path,
-			GENERIC_READ,
-			FILE_SHARE_READ,
-			&sa,
-			OPEN_EXISTING,
-			0, 0
-		);
-	} else if (!strcmp(mode, "w")) {
-		return CreateFile(
-			path,
-			GENERIC_WRITE,
-			FILE_SHARE_WRITE,
-			&sa,
-			OPEN_ALWAYS,
-			0, 0
-		);
-	} else if (!strcmp(mode, "a")) {
-		HANDLE hAppend = CreateFile(
-			path,
-			GENERIC_WRITE,
-			FILE_SHARE_WRITE,
-			&sa,
-			OPEN_ALWAYS,
-			0, 0
-		);
+    if (!strcmp(mode, "r")) {
+	return CreateFile(
+	    path,
+	    GENERIC_READ,
+	    FILE_SHARE_READ,
+	    &sa,
+	    OPEN_EXISTING,
+	    0, 0
+	    );
+    } else if (!strcmp(mode, "w")) {
+	return CreateFile(
+	    path,
+	    GENERIC_WRITE,
+	    FILE_SHARE_WRITE,
+	    &sa,
+	    OPEN_ALWAYS,
+	    0, 0
+	    );
+    } else if (!strcmp(mode, "a")) {
+	HANDLE hAppend = CreateFile(
+	    path,
+	    GENERIC_WRITE,
+	    FILE_SHARE_WRITE,
+	    &sa,
+	    OPEN_ALWAYS,
+	    0, 0
+	    );
         SetFilePointer(hAppend, 0, NULL, FILE_END);
         return hAppend;
-	} else {
-		return 0;
-	}
+    } else {
+	return 0;
+    }
 }
 #endif
 
-// the "state file" might tell us which app we're in the middle of,
-// what the starting CPU time is, etc.
-// Not implemented yet.
-//
-void parse_state_file() {
-}
 
-int shellTASK::run(int argct, char** argvt) {
-    string app_path, stdout_path, stdin_path, stderr_path;
+int shellTASK::run() {
+    string app_path;
 
     boinc_resolve_filename_s(application.c_str(), app_path);
-
-    // Append wrapper's command-line arguments to those in the job file.
-    //
-    for (int i=1; i<argct; i++){
-        command_line += argvt[i];
-        if ((i+1) < argct){
-            command_line += string(" ");
-        }
-    }   
 
 #ifdef _WIN32
     PROCESS_INFORMATION process_info;
@@ -240,15 +439,21 @@ int shellTASK::run(int argct, char** argvt) {
     // pass std handles to app
     //
     startup_info.dwFlags = STARTF_USESTDHANDLES;
-	if (stdout_filename != "") {
-		boinc_resolve_filename_s(stdout_filename.c_str(), stdout_path);
-		startup_info.hStdOutput = win_fopen(stdout_path.c_str(), "w");
-	}
-	if (stdin_filename != "") {
-		boinc_resolve_filename_s(stdin_filename.c_str(), stdin_path);
-		startup_info.hStdInput = win_fopen(stdin_path.c_str(), "r");
-	}
+    if (stdout_filename != "") {
+	string stdout_path;
+
+	boinc_resolve_filename_s(stdout_filename.c_str(), stdout_path);
+	startup_info.hStdOutput = win_fopen(stdout_path.c_str(), "w");
+    }
+    if (stdin_filename != "") {
+	string stdin_path;
+
+	boinc_resolve_filename_s(stdin_filename.c_str(), stdin_path);
+	startup_info.hStdInput = win_fopen(stdin_path.c_str(), "r");
+    }
     if (stderr_filename != "") {
+	string stderr_path;
+
         boinc_resolve_filename_s(stderr_filename.c_str(), stderr_path);
         startup_info.hStdError = win_fopen(stderr_path.c_str(), "w");
     } else {
@@ -277,38 +482,44 @@ int shellTASK::run(int argct, char** argvt) {
     char progname[256], buf[256];
     char* argv[256];
     char arglist[4096];
-	FILE* stdout_file;
-	FILE* stdin_file;
-	FILE* stderr_file;
+    FILE* stdout_file;
+    FILE* stdin_file;
+    FILE* stderr_file;
 
     pid = fork();
     if (pid == -1) {
         boinc_finish(ERR_FORK);
     }
     if (pid == 0) {
-		// we're in the child process here
-		//
-		// open stdout, stdin if file names are given
-		// NOTE: if the application is restartable,
-		// we should deal with atomicity somehow
-		//
-		if (stdout_filename != "") {
-			boinc_resolve_filename_s(stdout_filename.c_str(), stdout_path);
-			stdout_file = freopen(stdout_path.c_str(), "w", stdout);
-			if (!stdout_file) return ERR_FOPEN;
-		}
-		if (stdin_filename != "") {
-			boinc_resolve_filename_s(stdin_filename.c_str(), stdin_path);
-			stdin_file = freopen(stdin_path.c_str(), "r", stdin);
-			if (!stdin_file) return ERR_FOPEN;
-		}
+	// we're in the child process here
+	//
+	// open stdout, stdin if file names are given
+	// NOTE: if the application is restartable,
+	// we should deal with atomicity somehow
+	//
+	if (stdout_filename != "") {
+	    string stdout_path;
+
+	    boinc_resolve_filename_s(stdout_filename.c_str(), stdout_path);
+	    stdout_file = freopen(stdout_path.c_str(), "w", stdout);
+	    if (!stdout_file) return ERR_FOPEN;
+	}
+	if (stdin_filename != "") {
+	    string stdin_path;
+
+	    boinc_resolve_filename_s(stdin_filename.c_str(), stdin_path);
+	    stdin_file = freopen(stdin_path.c_str(), "r", stdin);
+	    if (!stdin_file) return ERR_FOPEN;
+	}
         if (stderr_filename != "") {
+	    string stderr_path;
+
             boinc_resolve_filename_s(stderr_filename.c_str(), stderr_path);
             stderr_file = freopen(stderr_path.c_str(), "w", stderr);
             if (!stderr_file) return ERR_FOPEN;
         }
 
-		// construct argv
+	// construct argv
         // TODO: use malloc instead of stack var
         //
         strcpy(buf, app_path.c_str());
@@ -330,7 +541,7 @@ bool shellTASK::poll(int& status) {
     if (GetExitCodeProcess(pid_handle, &exit_code)) {
         if (exit_code != STILL_ACTIVE) {
             status = exit_code;
-            final_cpu_time = cpu_time();
+            final_cpu_time = get_current_cpu_time();
             return true;
         }
     }
@@ -399,7 +610,7 @@ void poll_boinc_messages(TASK& task) {
     }
 }
 
-double shellTASK::cpu_time() {
+double shellTASK::get_current_cpu_time() {
 #ifdef _WIN32
     FILETIME creation_time, exit_time, kernel_time, user_time;
     ULARGE_INTEGER tKernel, tUser;
@@ -418,14 +629,14 @@ double shellTASK::cpu_time() {
 
     return totTime / 1.e7;
 #else
-    return  linux_cpu_time(pid);
+    return linux_cpu_time(pid);
 #endif
 }
 
 void send_status_message(TASK& task, double frac_done) {
     boinc_report_app_status(
-        task.starting_cpu + task.cpu_time(),
-        task.starting_cpu,
+        checkpoint_cpu + task.get_current_cpu_time(),
+        checkpoint_cpu,
         frac_done
     );
 }
@@ -457,9 +668,7 @@ void read_checkpoint(int& ntasks, double& cpu) {
 
 int main(int argc, char** argv) {
     BOINC_OPTIONS options;
-    int retval;
-    int ntasks;
-    double cpu;
+    job_type job;
 
     memset(&options, 0, sizeof(options));
     options.main_program = true;
@@ -468,26 +677,30 @@ int main(int argc, char** argv) {
 
     fprintf(stderr, "scospubapp: starting\n");
     boinc_init_options(&options);
-    retval = parse_job_file();
+
+    int retval = job.parse();
     if (retval) {
         fprintf(stderr, "can't parse job file: %d\n", retval);
         boinc_finish(retval);
     }
 
-    parse_state_file();
+    job.run();
+}
 
+void job_type::run()
+{
     read_checkpoint(ntasks, cpu);
     if (ntasks > (int)tasks.size()) {
         fprintf(stderr, "Checkpoint file: ntasks %d too large\n", ntasks);
         boinc_finish(1);
     }
-    for (unsigned int i=ntasks; i<tasks.size(); i++) {
+    for (unsigned int i = ntasks; i < tasks.size(); i++) {
         TASK& task = *tasks[i];
-        double frac_done = ((double)i)/((double)tasks.size());
+        double frac_done = ((double)i) / ((double)tasks.size());
 
-        fprintf(stderr, "running %s\n", task.getApplication());
-        task.starting_cpu = cpu;
-        retval = task.run(argc, argv);
+        fprintf(stderr, "running %s\n", task.get_application());
+        checkpoint_cpu = cpu;
+        int retval = task.run();
         if (retval) {
             fprintf(stderr, "can't run app: %d\n", retval);
             boinc_finish(retval);
@@ -505,7 +718,7 @@ int main(int argc, char** argv) {
             send_status_message(task, frac_done);
             boinc_sleep(1.);
         }
-        cpu += task.final_cpu_time;
+        cpu += final_cpu_time;
         write_checkpoint(i+1, cpu);
     }
     boinc_finish(0);

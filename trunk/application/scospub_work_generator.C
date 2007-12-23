@@ -64,6 +64,7 @@
 #include "sched_msgs.h"
 
 #include "scospub_db.h"
+#include "scospub_xml_tags.h"
 
 #define REPLICATION_FACTOR 1
 #define MAX_LINE_LENGTH 500
@@ -275,11 +276,11 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
     }
 
     // TODO: Hardcoded
-    f << "<job_desc>\n";
-    f << "  <project>" << project.name << "</project>\n";
-    f << "  <tool>" << tool.name << "</tool>\n";
-    f << "  <toolid>" << tool.id << "</toolid>\n";
-    f << "  <config>" << tool.config << "</config>\n";
+    f << "<" JOB_TAG ">\n";
+    f << "  <" TAG_PROJECT ">" << project.name << "</" TAG_PROJECT ">\n";
+    f << "  <" TAG_TOOL ">" << tool.name << "</" TAG_TOOL ">\n";
+    f << "  <" TAG_TOOLID ">" << tool.id << "</" TAG_TOOLID ">\n";
+    f << "  <" TAG_CONFIG ">" << tool.config << "</" TAG_CONFIG ">\n";
 
     DB_SCOS_SOURCE source;
 
@@ -289,29 +290,29 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
 	    project.id);
 
     // Mapping a project to url
-    f << "  <source>\n";
+    f << "  <" TAG_SOURCE ">\n";
     while (!source.enumerate(clause)) {
-	f << "    <svn id='" << source.id << "'>\n";
-	f << "      <url>" << source.url << "</url>\n";
+	f << "    <" TAG_SVN " id='" << source.id << "'>\n";
+	f << "      <" TAG_URL ">" << source.url << "</" TAG_URL ">\n";
 	const char * checkoutdir = source.url + strlen(source.rooturl);
-	f << "      <checkoutdir>" << checkoutdir << "</checkoutdir>\n";
-	f << "      <username>" << source.username << "</username>\n";
-	f << "      <password>" << source.password << "</password>\n";
-	f << "      <revision>" << svn_revisions[source.id] << "</revision>\n";
-	f << "    </svn>\n";
+	f << "      <" TAG_CHECKOUTDIR ">" << checkoutdir << "</" TAG_CHECKOUTDIR ">\n";
+	f << "      <" TAG_USERNAME ">" << source.username << "</" TAG_USERNAME ">\n";
+	f << "      <" TAG_PASSWORD ">" << source.password << "</" TAG_PASSWORD ">\n";
+	f << "      <" TAG_REVISION ">" << svn_revisions[source.id] << "</" TAG_REVISION ">\n";
+	f << "    </" TAG_SVN ">\n";
     }
-    f << "  </source>\n";
+    f << "  </" TAG_SOURCE ">\n";
     source.end_enumerate();
 
 
     while (!source.enumerate(clause)) {
 	const char * checkoutdir = source.url + strlen(source.rooturl);
 
-	f << "  <task>\n";
-	f << "    <application>";
+	f << "  <" TAG_TASK ">\n";
+	f << "    <" TAG_APPLICATION ">";
 	f << "svn";
-	f << "</application>\n";
-	f << "    <command_line>";
+	f << "</" TAG_APPLICATION ">\n";
+	f << "    <" TAG_COMMAND_LINE ">";
 
 	f << "co";
 	f << " -r " << svn_revisions[source.id];
@@ -325,33 +326,33 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
 	f << " --username '" << source.username << "' ";
 	f << " --password '" << source.password << "'";
 
-	f << "</command_line>\n";
-	f << "  </task>\n";
+	f << "</" TAG_COMMAND_LINE ">\n";
+	f << "  </" TAG_TASK ">\n";
     }
     source.end_enumerate();
 
-    f << "  <task>\n";
-    f << "    <application>";
+    f << "  <" TAG_TASK ">\n";
+    f << "    <" TAG_APPLICATION ">";
     // TODO: Mapping tool to application?
     f << "checkstyle-java";
-    f << "</application>\n";
-    f << "    <stdout_filename>";
+    f << "</" TAG_APPLICATION ">\n";
+    f << "    <" TAG_STDOUT_FILENAME ">";
     f << "out1";
-    f << "</stdout_filename>\n";
-    f << "    <stderr_filename>";
+    f << "</" TAG_STDOUT_FILENAME ">\n";
+    f << "    <" TAG_STDERR_FILENAME ">";
     f << "out2";
-    f << "</stderr_filename>\n";
+    f << "</" TAG_STDERR_FILENAME ">\n";
 
-    f << "    <command_line>";
+    f << "    <" TAG_COMMAND_LINE ">";
     // TODO: Mapping tool to application?
     f << "-cp checkstyle-all-4.3.jar";
     f << " com.puppycrawl.tools.checkstyle.Main";
     f << " -c checkstyle-sun_checks.xml";
     // TODO: Part url! checkoutdir!
     f << " -r /tmp/scospub/" << project.name;
-    f << "</command_line>\n";
-    f << "  </task>\n";
-    f << "</job_desc>\n";
+    f << "</" TAG_COMMAND_LINE ">\n";
+    f << "  </" TAG_TASK ">\n";
+    f << "</" JOB_TAG ">\n";
 
     f.close();
 
@@ -580,7 +581,7 @@ int main(int argc, char** argv) {
         exit(1);
     }
     // TODO: Hardcoded!
-    if (app.lookup("where name='wrapper'")) {
+    if (app.lookup("where name='scospubapp'")) {
         log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL, "can't find app\n");
         exit(1);
     }
