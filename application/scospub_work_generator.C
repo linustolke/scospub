@@ -292,9 +292,11 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
     // Mapping a project to url
     f << "  <" TAG_SOURCE ">\n";
     while (!source.enumerate(clause)) {
-	f << "    <" TAG_SVN " id='" << source.id << "'>\n";
+	f << "    <" TAG_SVN ">\n";
 	f << "      <" TAG_URL ">" << source.url << "</" TAG_URL ">\n";
-	const char * checkoutdir = source.url + strlen(source.rooturl);
+
+	std::string checkoutdir = project.name;
+	checkoutdir += (source.url + strlen(source.rooturl));
 	f << "      <" TAG_CHECKOUTDIR ">" << checkoutdir << "</" TAG_CHECKOUTDIR ">\n";
 	f << "      <" TAG_USERNAME ">" << source.username << "</" TAG_USERNAME ">\n";
 	f << "      <" TAG_PASSWORD ">" << source.password << "</" TAG_PASSWORD ">\n";
@@ -304,38 +306,7 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
     f << "  </" TAG_SOURCE ">\n";
     source.end_enumerate();
 
-
-    while (!source.enumerate(clause)) {
-	const char * checkoutdir = source.url + strlen(source.rooturl);
-
-	f << "  <" TAG_TASK ">\n";
-	f << "    <" TAG_APPLICATION ">";
-	f << "svn";
-	f << "</" TAG_APPLICATION ">\n";
-	f << "    <" TAG_COMMAND_LINE ">";
-
-	f << "co";
-	f << " -r " << svn_revisions[source.id];
-
-	// Mapping a project to url
-	f << " --no-auth-cache";
-	f << " " << source.url;
-
-	// TODO: Part url! checkoutdir!
-	f << " /tmp/scospub/" << project.name << "/trunk/src";
-	f << " --username '" << source.username << "' ";
-	f << " --password '" << source.password << "'";
-
-	f << "</" TAG_COMMAND_LINE ">\n";
-	f << "  </" TAG_TASK ">\n";
-    }
-    source.end_enumerate();
-
-    f << "  <" TAG_TASK ">\n";
-    f << "    <" TAG_APPLICATION ">";
-    // TODO: Mapping tool to application?
-    f << "checkstyle-java";
-    f << "</" TAG_APPLICATION ">\n";
+    f << "  <" TAG_TASK_JAVA ">\n";
     f << "    <" TAG_STDOUT_FILENAME ">";
     f << "out1";
     f << "</" TAG_STDOUT_FILENAME ">\n";
@@ -351,7 +322,8 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
     // TODO: Part url! checkoutdir!
     f << " -r /tmp/scospub/" << project.name;
     f << "</" TAG_COMMAND_LINE ">\n";
-    f << "  </" TAG_TASK ">\n";
+    f << "    <" TAG_IGNORE_EXIT ">1</" TAG_IGNORE_EXIT ">\n";
+    f << "  </" TAG_TASK_JAVA ">\n";
     f << "</" JOB_TAG ">\n";
 
     f.close();
