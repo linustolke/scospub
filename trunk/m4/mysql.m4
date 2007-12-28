@@ -40,12 +40,16 @@ AC_DEFUN([WITH_MYSQL], [
     ADDFLAGS="$ADDFLAGS $IBASE/storage/ndb/ndbapi"
     ADDFLAGS="$ADDFLAGS $IBASE/storage/ndb/mgmapi"
 
-    CFLAGS="$CFLAGS $ADDFLAGS"    
-    CXXFLAGS="$CXXFLAGS $ADDFLAGS"    
+    MYSQL_CFLAGS="$ADDFLAGS"    
+    MYSQL_CXXFLAGS="$ADDFLAGS"    
 
-    LDFLAGS="$LDFLAGS "`$MYSQL_CONFIG --libs_r`" -lndbclient -lmystrings -lmysys"
-    LDFLAGS="$LDFLAGS "`$MYSQL_CONFIG --libs_r`" -lndbclient -lmystrings"
+    MYSQL_LDFLAGS=`$MYSQL_CONFIG --libs_r`" -lndbclient -lmystrings -lmysys"
+    MYSQL_LDFLAGS="$MYSQL_LDFLAGS "`$MYSQL_CONFIG --libs_r`" -lndbclient -lmystrings"
     
+    AC_SUBST(MYSQL_CFLAGS)
+    AC_SUBST(MYSQL_CXXFLAGS)
+    AC_SUBST(MYSQL_LDFLAGS)
+
     AC_MSG_RESULT($MYSQL_CONFIG)
   fi  
 ])
