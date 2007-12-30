@@ -1,6 +1,7 @@
 #summary These are the arguments for a by-project-layout
 
 The by-project-layout was not chosen.
+The chosen layout is described in the ServerSideTools.
 
 = Pros =
 
