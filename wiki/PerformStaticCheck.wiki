@@ -4,11 +4,13 @@
 = Perform a static check =
 
 The CheckHost does this continously.
-This is taken care of by the BOINC client and the application.
+This is taken care of by the BOINC client and the [Application].
   # Download a work package from the CentralHost.
   # Start the work package:
     # Download the appropriate tool
-    # Download the source to test
+    # Download the source from the project source repository
   # Run the tool
   # Upload the result.
   # The CentralHost enters the result in a database.
+
+The result could also be uploaded to some project repository for published result.
