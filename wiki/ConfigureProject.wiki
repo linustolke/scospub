@@ -8,5 +8,5 @@ enters the web page of the system and configures the project.
 
 The configuration includes:
   * Name of the project
-  * Repository location
+  * Repository location or locations
   * Selection of tools to run and if available, how they are to be configured.
