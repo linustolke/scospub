@@ -21,3 +21,15 @@ Another problem was that extra "tools" had to be distributed to start svn and ja
 For this reason the next step would be to rewrite the application to a specific scospub application that solves this.
 It knows the concept of repositories (subversion and whatever), starts the correct application and handles problems in a smart way.
 It could also be easily augmented to do some basic security checks on the invoked programs.
+
+
+In order not to affect the normal boinc handling of files,
+we have a work directory where checked out files reside.
+The layout is:
+  /tmp/scospub/<OSPROJ>/repos/<configured paths>
+
+All instances of applications from the same <OSPROJ> share the same
+directory so
+some locking or other protection mechanism
+is needed to allow
+multiple boinc clients.
