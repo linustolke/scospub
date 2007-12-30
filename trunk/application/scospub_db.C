@@ -43,10 +43,12 @@ void DB_SCOS_PROJECT::db_print(char* buf)
     sprintf(buf,
 	    "name='%s', "
 	    "active=%d, "
-	    "user_friendly_name='%s'",
+	    "user_friendly_name='%s', "
+	    "nextpoll=NOW() + INTERVAL %d SECOND",
 	    name2,
 	    active,
-	    user_friendly_name2
+	    user_friendly_name2,
+	    delay
 	);
 }
 
@@ -59,6 +61,7 @@ void DB_SCOS_PROJECT::db_parse(MYSQL_ROW& r)
     strcpy2(name, r[i++]);
     strcpy2(user_friendly_name, r[i++]);
     active = atoi(r[i++]);
+    delay = 0; // We don't read the delay.
 }
 
 // db_print method for the scos_source table
