@@ -27,6 +27,67 @@ It is /scospres in the URL.
 The project configuration files are in html/scosconf.
 /scosconf in the URL.
 
+== File/Project layout ==
+
+Configuring the clients, alternative 1:
+
+From the SCOSPUB perspective it is the tool that is important and
+not what OS project it is applied to.
+This means that from the CheckHost and CheckHost administrators
+perspective, he configures firstly what tools he would like to run
+and then (if possible) what OpenSourceProject he wants to contribute
+to.
+
+Configuring the clients, alternative 2:
+
+Every OpenSourceProject has its own application with tools provided
+according to its configuration.
+
+We work with alternative 1. It seems to fit better with the large-files
+that would be the tools.
+This also means that we can install application and tools directly from
+Makefiles in the scosconf project.
+
+In the projects/<WHATEVER> directory on the CentralHost
+the following files are installed by make in the scospub project:
+
+  apps/scospub/scospub_<VERSION>_<PLATFORM>/scospub_<VERSION>_<PLATFORM>
+  (
+  apps/wrapper/wrapper_<VERSION>_<PLATFORM>/wrapper_<VERSION>_<PLATFORM>
+  apps/wrapper/wrapper_<VERSION>_<PLATFORM>/java=java_<VERSION>_<PLATFORM>
+  apps/wrapper/wrapper_<VERSION>_<PLATFORM>/svn=svn_<VERSION>_<PLATFORM>
+  )
+
+All tools are run from scospub application.
+
+Templates are simplified.
+
+The following templates are installed:
+
+  templates/scospub0_wu
+  templates/scospub0_result
+  templates/scospub1_wu
+  templates/scospub1_result
+
+where the number in the name reflects how many input files except for
+job.xml that are provided and how many output files that are handled.
+
+The job.xml is generated separate for every job
+depending on the configurations of the project done 
+by the [OpenSourceProjectAdministator]s
+using the web interface.
+
+In order not to affect the normal boinc handling of files,
+we have a work directory where checked out files reside.
+The layout is:
+  /tmp/scospub/<OSPROJ>/repos/<configured paths>
+
+All instances of applications from the same <OSPROJ> share the same
+directory so
+some locking or other protection mechanism
+is needed to allow
+multiple boinc clients.
+
 
 == The database ==
 
