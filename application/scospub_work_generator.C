@@ -223,26 +223,6 @@ svn_result::svn_result(const char * url,
 	    {
 		not_changed_in = 0;
 	    }
-
-	    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-				"LastChanged Line: %s\n", line.c_str()
-		    );
-	    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-				"LastChanged When: %d\n", not_changed_since
-		    );
-	    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-				"LastChanged Time since: %d\n", not_changed_in
-		    );
-	    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-				"LastChanged when: %04d-%02d-%02d %02d:%02d:%02d\n",
-				when.tm_year,
-				when.tm_mon,
-				when.tm_mday,
-				when.tm_hour,
-				when.tm_min,
-				when.tm_sec
-		    );
-	    
 	}
     }
     file.close();
