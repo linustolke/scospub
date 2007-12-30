@@ -5,8 +5,8 @@
 There are two essential parts of the project,
 differing in how they are deployed and because of that they have
 completely separate requirements.
-  * Server side tools
-  * Application
+  * [[Server side tools]]
+  * [[Application]]
 
 == Server side tools ==
 
