@@ -22,7 +22,7 @@ Essentially these are deployed only once.
 == [Application] ==
 
 The [Application] is a BOINC application.
-It is downloaded from the server and run on each ClientHost.
+It is downloaded from the server and run on each CheckHost.
 
 These could exist for several combinations of OS and CPU according to the BOINC
 handling of different system types.
