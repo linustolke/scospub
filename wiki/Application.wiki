@@ -3,7 +3,7 @@
 = Application =
 
 The Application is a BOINC application.
-It is downloaded from the server and run on each ClientHost.
+It is downloaded from the server and run on each CheckHost.
 
 These could exist for several combinations of OS and CPU according to the BOINC
 handling of different system types.
@@ -24,9 +24,9 @@ It could also be easily augmented to do some basic security checks on the invoke
 
 
 In order not to affect the normal boinc handling of files,
-we have a work directory where checked out files reside.
+the checked out files from the project's repository reside in a separate directory.
 The layout is:
-  /tmp/scospub/<OSPROJ>/repos/<configured paths>
+  /tmp/scospub/<project>/<configured path>
 
 All instances of applications from the same <OSPROJ> share the same
 directory so
