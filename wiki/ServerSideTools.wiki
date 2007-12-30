@@ -49,24 +49,19 @@ The scripts fetch information directly from the database to present it.
 
 == File/Project layout ==
 
-Configuring the clients, alternative 1:
-
 From the SCOSPUB perspective it is the tool that is important and
 not what OS project it is applied to.
 This means that from the CheckHost and CheckHost administrators
 perspective, he configures firstly what tools he would like to run
-and then (if possible) what OpenSourceProject he wants to contribute
-to.
+and then (if possible) what Project he wants to contribute to.
 
-Configuring the clients, alternative 2:
-
-Every OpenSourceProject has its own application with tools provided
-according to its configuration.
 
 We work with alternative 1. It seems to fit better with the large-files
 that would be the tools.
 This also means that we can install application and tools directly from
 Makefiles in the scosconf project.
+
+There are also some ReasonsForHavingFileLayoutByProject.
 
 In the projects/<WHATEVER> directory on the CentralHost
 the following files are installed by make in the scospub project:
