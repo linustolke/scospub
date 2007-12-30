@@ -3,7 +3,7 @@
 
 = Central Host =
 
-This is the host running the application (together with a BOINC server installation).
+This is the host running the scospub infrastructure (together with a BOINC server installation).
 
 In the initial ideas of the project,
 it is assumed that only one such host is needed world-wide,
