@@ -12,10 +12,10 @@ completely separate requirements.
 
 The ServerSideTools run, together with the BOINC server on the CentralHost to
   * Prepare work packages
-  * Accept and take care of changes in configuration, new [OpenSourceProject]s
+  * Accept and take care of changes in configuration and new Projects
   * Handle result from application
   * Present the result
-  * Do configuration of an OpenSourceProject
+  * Do configuration of a Project
 
 Essentially these are deployed only once.
 
