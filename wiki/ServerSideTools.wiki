@@ -11,9 +11,9 @@ The program regularly:
   * Contact the source repositories to check for changes.
   * If any changes is seen in the repository, a new work unit is created and fed into the boinc structure.
 
-== Handle result from Application ==
+== Handle result from [Application] ==
 
-When the Application has uploaded a result, the result is validated.
+When the [Application] has uploaded a result, the result is validated.
 Initially the simple_bitwise_validator is used from the boinc installation.
 
 Then the information is assimilated.
@@ -51,29 +51,23 @@ The scripts fetch information directly from the database to present it.
 
 From the SCOSPUB perspective it is the tool that is important and
 not what OS project it is applied to.
-This means that from the CheckHost and CheckHost administrators
-perspective, he configures firstly what tools he would like to run
-and then (if possible) what Project he wants to contribute to.
+From the CheckHost and CheckHost administrators perspective, 
+each tool is a new download from the CentralHost and it could be used on several projects.
+The large-files boinc mechanism could be used to help in this.
 
-
-We work with alternative 1. It seems to fit better with the large-files
-that would be the tools.
-This also means that we can install application and tools directly from
+This also means that we can install the [Application] and tools directly from
 Makefiles in the scosconf project.
 
 There are also some ReasonsForHavingFileLayoutByProject.
 
 In the projects/<WHATEVER> directory on the CentralHost
-the following files are installed by make in the scospub project:
+the following files are installed by "make install" in the scospub project:
 
-  apps/scospub/scospub_<VERSION>_<PLATFORM>/scospub_<VERSION>_<PLATFORM>
-  (
-  apps/wrapper/wrapper_<VERSION>_<PLATFORM>/wrapper_<VERSION>_<PLATFORM>
-  apps/wrapper/wrapper_<VERSION>_<PLATFORM>/java=java_<VERSION>_<PLATFORM>
-  apps/wrapper/wrapper_<VERSION>_<PLATFORM>/svn=svn_<VERSION>_<PLATFORM>
-  )
+  apps/scospubapp/scospubapp_<VERSION>_<PLATFORM>/scospubapp_<VERSION>_<PLATFORM>
 
-All tools are run from scospub application.
+This is then copied to the download directory by the bin/update_versions function meaning that after every new version of the scospubapp the script must be run.
+
+All tools are treated as input files and downloaded using the Boinc file download mechanism. They are copied, together with the config files needed, to the download directory and then copied to the right download directory by the boinc infrastructure.
 
 Templates are simplified.
 
@@ -91,18 +85,6 @@ The job.xml is generated separate for every job
 depending on the configurations of the project done 
 by the [OpenSourceProjectAdministator]s
 using the web interface.
-
-In order not to affect the normal boinc handling of files,
-we have a work directory where checked out files reside.
-The layout is:
-  /tmp/scospub/<OSPROJ>/repos/<configured paths>
-
-All instances of applications from the same <OSPROJ> share the same
-directory so
-some locking or other protection mechanism
-is needed to allow
-multiple boinc clients.
-
 
 == The database ==
 
