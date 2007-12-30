@@ -2,14 +2,25 @@
 
 = Server side tools =
 
-The Server side tools run, together with the BOINC server on the CentralHost to
-  * Prepare work packages
-  * Accept and take care of changes in configuration, new [OpenSourceProject]s
-  * Handle result from application
-  * Present the result
-  * Do configuration of an OpenSourceProject
+== Prepare work units ==
 
-Essentially these are deployed only once.
+Workunits are prepared by the scospub_work_generator program.
+
+The program regularly:
+  * Fetches a list of all projects and their sources.
+  * Contact the source repositories to check for changes.
+  * If any changes is seen in the repository, a new work unit is created and fed into the boinc structure.
+
+== Handle result from Application ==
+
+When the Application has uploaded a result, the result is validated.
+Initially the simple_bitwise_validator is used from the boinc installation.
+
+Then the information is assimilated.
+The scospub_assimilator program takes care of this.
+The result is then added into the scospub-specific tables in the database and can then be seen by the result presentation.
+
+== CentralHost web server installation
 
 The presentation of results and the configuration of projects uses
 the boinc server web pages.
@@ -19,13 +30,22 @@ Including:
   * php include files
   * Database (new tables for the scospub-level results)
 
+=== Changes in configuration ===
+
+The project configuration files are in html/scosconf.
+/scosconf in the URL.
+
+The scripts change the database directly.
+
+=== Present the result ===
+
 The presentation of results is in the html/scospres
 both in the scospub project and in the installed
 boinc server web pages.
 It is /scospres in the URL.
 
-The project configuration files are in html/scosconf.
-/scosconf in the URL.
+The scripts fetch information directly from the database to present it.
+
 
 == File/Project layout ==
 
