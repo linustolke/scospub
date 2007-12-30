@@ -69,6 +69,8 @@
 #define REPLICATION_FACTOR 1
 #define MAX_LINE_LENGTH 500
 
+using std::string;
+
 // globals
 //
 char* wu_template = NULL;
@@ -92,15 +94,18 @@ public:
     const char * get_rooturl() const { return rooturl.c_str(); };
     const char * get_uuid() const { return uuid.c_str(); };
     int get_last_revision() const { return last_revision; };
+    int get_not_changed_in() const { return not_changed_in; };
 
 private:
     bool successful;
-    std::string rooturl;
-    std::string uuid;
+    string rooturl;
+    string uuid;
     int last_revision;
+    int not_changed_in;
 };
 
-svn_result::svn_result(const char * url, const char * username, const char * password)
+svn_result::svn_result(const char * url,
+		       const char * username, const char * password)
 {
     successful = false;
     last_revision = -1;
@@ -115,7 +120,7 @@ svn_result::svn_result(const char * url, const char * username, const char * pas
     char * filename = mktemp(tempfile);
 
     // TODO: errorcheck!
-    std::string commandline;
+    string commandline;
 
     // TODO: Hardcoded svn
     commandline.append("svn info ");
@@ -151,7 +156,7 @@ svn_result::svn_result(const char * url, const char * username, const char * pas
 			url);
 
     // Parse through the result
-    std::string line;
+    string line;
 
     std::ifstream file(filename, std::ios::in);
     // TODO: Error check
@@ -161,7 +166,7 @@ svn_result::svn_result(const char * url, const char * username, const char * pas
 #define SVN_LCR "Last Changed Rev: "
 	if (line.compare(0, strlen(SVN_LCR), SVN_LCR) == 0)
 	{
-	    std::string sub(line.substr(strlen(SVN_LCR)));
+	    string sub(line.substr(strlen(SVN_LCR)));
 	    last_revision = atoi(sub.c_str());
 	}
 
@@ -175,6 +180,69 @@ svn_result::svn_result(const char * url, const char * username, const char * pas
 	if (line.compare(0, strlen(SVN_UUID), SVN_UUID) == 0)
 	{
 	    uuid = line.substr(strlen(SVN_UUID));
+	}
+
+#define SVN_LAST_CHANGED "Last Changed Date: "
+	if (line.compare(0, strlen(SVN_LAST_CHANGED), SVN_LAST_CHANGED) == 0)
+	{
+	    struct tm when;
+	    time_t not_changed_since = time(NULL);
+
+	    int year;
+	    int mon;
+
+	    if (sscanf(line.substr(strlen(SVN_LAST_CHANGED)).c_str(), 
+		       "%d-%d-%d %d:%d:%d",
+		       &year,
+		       &mon,
+		       &when.tm_mday,
+		       &when.tm_hour,
+		       &when.tm_min,
+		       &when.tm_sec) == 6) {
+		when.tm_year = year - 1900;
+		when.tm_mon = mon - 1;
+		not_changed_since = mktime(&when);
+	    }
+
+	    // TODO: Does not account for time differences but makes
+	    // a conservative guess.
+	    // This means that it doesn't begin backing off until
+	    // up to 24 hours after the last commit.
+	    if (not_changed_since > 0)
+	    {
+		not_changed_in = time(NULL) - not_changed_since - 24 * 3600;
+	    }
+	    else
+	    {
+		// Information was not received correctly. We don't know
+		// anything.
+		not_changed_in = 0;
+	    }
+
+	    if (not_changed_in < 0)
+	    {
+		not_changed_in = 0;
+	    }
+
+	    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
+				"LastChanged Line: %s\n", line.c_str()
+		    );
+	    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
+				"LastChanged When: %d\n", not_changed_since
+		    );
+	    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
+				"LastChanged Time since: %d\n", not_changed_in
+		    );
+	    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
+				"LastChanged when: %04d-%02d-%02d %02d:%02d:%02d\n",
+				when.tm_year,
+				when.tm_mon,
+				when.tm_mday,
+				when.tm_hour,
+				when.tm_min,
+				when.tm_sec
+		    );
+	    
 	}
     }
     file.close();
@@ -295,7 +363,7 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
 	f << "    <" TAG_SVN ">\n";
 	f << "      <" TAG_URL ">" << source.url << "</" TAG_URL ">\n";
 
-	std::string checkoutdir = project.name;
+	string checkoutdir = project.name;
 	checkoutdir += (source.url + strlen(source.rooturl));
 	f << "      <" TAG_CHECKOUTDIR ">" << checkoutdir << "</" TAG_CHECKOUTDIR ">\n";
 	f << "      <" TAG_USERNAME ">" << source.username << "</" TAG_USERNAME ">\n";
@@ -393,7 +461,7 @@ void main_loop()
     {
 	DB_SCOS_PROJECT project;
 
-	while (!project.enumerate("WHERE active = TRUE"))
+	while (!project.enumerate("WHERE active = TRUE AND NOW() > nextpoll"))
 	{
 	    process_svn_urls();
 
@@ -415,6 +483,9 @@ void main_loop()
 	    sprintf(clause,
 		    "WHERE project = %d AND active = TRUE AND valid='valid'",
 		    project.id);
+
+	    // Two years maximum
+            int not_changed_in = 2 * 365 * 24 * 3600;
 
 	    while (!source.enumerate(clause))
 	    {
@@ -460,6 +531,11 @@ void main_loop()
 		    source.update();
 		}
 
+		if (res.get_not_changed_in() < not_changed_in)
+		{
+		    not_changed_in = res.get_not_changed_in();
+		}
+
 		svn_revisions[source.id] = res.get_last_revision();
 
 		if (res.get_last_revision() <= source.lastrevision)
@@ -499,6 +575,26 @@ void main_loop()
 			    );
 			make_job(project, tool, svn_revisions);
 		    }
+		}
+
+		// Start putting off after 24 hours
+		if (not_changed_in > 24 * 3600) {
+		    // If it was a long time since this project was updated
+		    // don't immediately poll it again.
+		    // For every minute above the 24 hours, delay two extra
+		    // seconds (a factor 30).
+		    project.delay = (not_changed_in - 24 * 3600) / 30;
+
+		    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
+					"Delaying next processing of project "
+					"%s for %d:%02d:%02d.\n",
+					project.name,
+					project.delay / 3600,
+					(project.delay / 60) % 60,
+					project.delay % 60
+			);
+
+		    project.update();
 		}
 
 		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,

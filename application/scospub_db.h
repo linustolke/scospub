@@ -6,6 +6,7 @@ struct SCOS_PROJECT {
     char name[256];
     char user_friendly_name[256];
     int active;
+    int delay;
 
     void clear();
 };
