@@ -78,10 +78,11 @@ public:
 class processTASK : public TASK {
 private:
     string application;
+    string command_line;
+
     string stdin_filename;
     string stdout_filename;
     string stderr_filename;
-    string command_line;
     bool ignore_exit;
 #ifdef _WIN32
     HANDLE pid_handle;
@@ -98,8 +99,8 @@ protected:
     bool parse_cmd_line(XML_PARSER& xp, char * tag);
 
 public:
-    virtual const char * get_application() const { return application.c_str(); }
-
+    // From TASK
+    virtual const char * get_application() const;
     virtual int parse(XML_PARSER&);
     virtual int run();
     virtual bool poll(int& status);
@@ -113,6 +114,7 @@ public:
 class javaTASK : public processTASK
 {
 public:
+    // From TASK
     virtual int parse(XML_PARSER&);
     virtual int run();
 };
@@ -144,14 +146,7 @@ private:
     vector<source*> sources;
 
 public:
-    void push_back_all(vector<TASK*>& tasks) const {
-	for (vector<source*>::const_iterator iter = sources.begin(); 
-	    iter != sources.end();
-	    iter++)
-	{
-	    tasks.push_back(*iter);
-	}
-    }
+    void push_back_all(vector<TASK*>& tasks) const;
 
     virtual int parse(XML_PARSER&);
 };
@@ -294,6 +289,11 @@ int sources::parse(XML_PARSER& xp)
 }
 
 
+const char * processTASK::get_application() const
+{
+    return application.c_str();
+}
+
 bool processTASK::parse_in_out_files(XML_PARSER& xp, char * tag)
 {
     if (xp.parse_string(tag, TAG_STDIN_FILENAME, stdin_filename))
@@ -371,6 +371,7 @@ int javaTASK::parse(XML_PARSER& xp)
 		    "javaTASK::parse(): unexpected text %s\n", tag);
             continue;
         }
+
         if (!strcmp(tag, "/" TAG_TASK_JAVA))
 	{
             return 0;
@@ -395,6 +396,18 @@ int javaTASK::run()
 }
 
 
+void sources::push_back_all(vector<TASK*>& tasks) const {
+    for (vector<source*>::const_iterator iter = sources.begin(); 
+	 iter != sources.end();
+	 iter++)
+    {
+	tasks.push_back(*iter);
+    }
+}
+
+
+
+
 // Parse a file
 // If <task> is found, it transfers control to processTASK->parse()
 int job_type::parse() {
@@ -411,8 +424,9 @@ int job_type::parse() {
     mf.init_file(f);
     XML_PARSER xp(&mf);
 
+    if (!xp.parse_start(JOB_TAG))
+	return ERR_XML_PARSE;
 
-    if (!xp.parse_start(JOB_TAG)) return ERR_XML_PARSE;
     while (!xp.get(tag, sizeof(tag), is_tag))
     {
         if (!is_tag)
@@ -430,14 +444,17 @@ int job_type::parse() {
 	    || strcmp(tag, TAG_TASK_JAVA) == 0)
 	{
 	    TASK * task = NULL;
+
             if (strcmp(tag, TAG_TASK) == 0)
 	    {
 		task = new processTASK();
 	    }
+
             if (strcmp(tag, TAG_TASK_JAVA) == 0)
 	    {
 		task = new javaTASK();
 	    }
+
 	    if (task == NULL) {
 		// Shouldn't happen.
 		fprintf(stderr,
@@ -446,6 +463,7 @@ int job_type::parse() {
 	    }
 
             int retval = task->parse(xp);
+
             if (!retval) {
                 tasks.push_back(task);
             }
@@ -469,6 +487,7 @@ int job_type::parse() {
 	{
 	    sources src;
 	    int retval = src.parse(xp);
+
             if (!retval) {
                 src.push_back_all(tasks);
             }
@@ -535,6 +554,18 @@ HANDLE win_fopen(const char* path, const char* mode) {
 
 
 int processTASK::run() {
+    if (application == "")
+    {
+	fprintf(stderr, "The application is not set.\n");
+	return ERR_EXEC;
+    }
+
+    if (command_line == "")
+    {
+	fprintf(stderr, "The command line is not set.\n");
+	return ERR_EXEC;
+    }
+
     string app_path;
 
     boinc_resolve_filename_s(application.c_str(), app_path);
@@ -741,6 +772,7 @@ void processTASK::resume() {
 
 void poll_boinc_messages(TASK& task) {
     BOINC_STATUS status;
+
     boinc_get_status(&status);
     if (status.no_heartbeat) {
         task.kill();
@@ -908,7 +940,6 @@ void job_type::run()
 }
 
 #ifdef _WIN32
-
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR Args, int WinMode) {
     LPSTR command_line;
     char* argv[100];
