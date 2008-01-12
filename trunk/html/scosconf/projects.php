@@ -16,7 +16,11 @@ if ($xml) {
     echo tr(SCOSC_DESCRIPTION)."<p>
     ";
 }
-$result = mysql_query("SELECT * FROM scos_project WHERE id > 1");
+$result = mysql_query('SELECT scos_project.id as projid, name_lc, name_html, '
+    . 'active, team.name as name '
+    . 'FROM scos_project, team '
+    . 'WHERE scos_project.id > 1 '
+    . 'AND scos_project.team = team.id');
 
 if (mysql_numrows($result) > 0) {
     if ($xml) {
@@ -33,21 +37,24 @@ if (mysql_numrows($result) > 0) {
 	";
     }
     while ($proj = mysql_fetch_object($result)) {
-	$friendly_name = $proj->user_friendly_name;
+	$friendly_name = $proj->name_html;
+	if (!$friendly_name) {
+	    $friendly_name = $proj->name;
+	}
 	if (!$friendly_name) {
 	    $friendly_name = "?";
 	}
 	if ($xml) {
 	    echo "  <scos_project>\n";
-	    echo "    <id>$proj->id</id>\n";
+	    echo "    <id>$proj->projid</id>\n";
 	    echo "    <active>$proj->active</active>\n";
-	    echo "    <name>$proj->name</name>\n";
+	    echo "    <name>$proj->name_lc</name>\n";
 	} else {
 	    echo "
 		<TR>
 		  <TD VALIGN='TOP' ROWSPAN='2'>
-                    <A NAME='proj$proj->id' 
-                       HREF='configproject.php?project=$proj->id'>
+                    <A NAME='proj$proj->projid' 
+                       HREF='configproject.php?project=$proj->projid'>
                       $proj->name
                     </A>
 	    ";
@@ -66,7 +73,7 @@ if (mysql_numrows($result) > 0) {
 	    ";
 	    $r2 = mysql_query('SELECT * '
 		    . 'FROM scos_source '
-		    . "WHERE project = $proj->id");
+		    . "WHERE project = $proj->projid");
 
 	    if (mysql_numrows($r2) > 0) {
 		echo "
@@ -77,7 +84,7 @@ if (mysql_numrows($result) > 0) {
 		    echo "<LI>";
 
 		    if ($av->type == 1) {
-			echo "<A HREF='configsource.php?project=$proj->id&id=$av->id'>";
+			echo "<A HREF='configsource.php?project=$proj->projid&id=$av->id'>";
 			echo tr(SCOSC_SVN_SOURCE_URL);
 			echo " $av->url</A> ($av->valid) ";
 		    } else {
@@ -99,7 +106,7 @@ if (mysql_numrows($result) > 0) {
 		echo tr(SCOSC_NO_SOURCE);
 	    }
             echo "<BR>
-	          <A HREF='configsource.php?project=$proj->id'>"
+	          <A HREF='configsource.php?project=$proj->projid'>"
 		.tr(SCOSC_ADD_SOURCE)
 		."</A>
 	    ";
@@ -114,7 +121,7 @@ if (mysql_numrows($result) > 0) {
 	    ";
 	    $r3 = mysql_query('SELECT * '
 		    . 'FROM scos_tool '
-		    . "WHERE project = $proj->id "
+		    . "WHERE project = $proj->projid "
 		    . 'AND project > 1');
 
 	    if (mysql_numrows($r3) > 0) {
@@ -123,7 +130,7 @@ if (mysql_numrows($result) > 0) {
 		";
 		while ($av = mysql_fetch_object($r3)) {
 		    echo "<LI>";
-		    echo "<A HREF='configtools.php?project=$proj->id'>
+		    echo "<A HREF='configtools.php?project=$proj->projid'>
 			".tr(SCOSC_CONFIG_TOOLS)."</A>
 		    ";
 		    echo " $av->name";
@@ -139,7 +146,7 @@ if (mysql_numrows($result) > 0) {
 		    </UL>
 		";
 	    } else {
-		echo "<A HREF='configtools.php?project=$proj->id'>"
+		echo "<A HREF='configtools.php?project=$proj->projid'>"
 		    .tr(SCOSC_NO_TOOL)."</A>
 		";
 	    }

@@ -31,23 +31,12 @@ int DB_SCOS_RESULT_SOURCE::get_id() {return 0;}
 // db_print method for the scos_project table
 void DB_SCOS_PROJECT::db_print(char* buf)
 {
-    char name2[2 * sizeof name];
-    char user_friendly_name2[2 * sizeof name];
-    
-    safe_strcpy(name2, name);
-    safe_strcpy(user_friendly_name2, user_friendly_name);
-
-    ESCAPE(name2);
-    ESCAPE(user_friendly_name2);
-
     sprintf(buf,
-	    "name='%s', "
+	    "team=%d, "
 	    "active=%d, "
-	    "user_friendly_name='%s', "
 	    "nextpoll=NOW() + INTERVAL %d SECOND",
-	    name2,
+	    team,
 	    active,
-	    user_friendly_name2,
 	    delay
 	);
 }
@@ -58,8 +47,7 @@ void DB_SCOS_PROJECT::db_parse(MYSQL_ROW& r)
     int i = 0;
     clear();
     id = atoi(r[i++]);
-    strcpy2(name, r[i++]);
-    strcpy2(user_friendly_name, r[i++]);
+    team = atoi(r[i++]);
     active = atoi(r[i++]);
     delay = 0; // We don't read the delay.
 }

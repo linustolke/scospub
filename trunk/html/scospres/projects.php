@@ -25,21 +25,30 @@ if ($xml) {
         </tr>
     ";
 }
-$result = mysql_query("select * from scos_project where active=1");
+$result = mysql_query('SELECT scos_project.id as id, '
+    . 'team.name as name, '
+    . 'name_lc, '
+    . 'name_html '
+    . 'FROM scos_project, team '
+    . 'WHERE active=1 '
+    . 'AND scos_project.team = team.id');
 
 while ($proj = mysql_fetch_object($result)) {
-    $friendly_name = $proj->user_friendly_name;
+    $friendly_name = $proj->name_html;
+    if (!$friendly_name) {
+	$friendly_name = $proj->name;
+    }
     if (!$friendly_name) {
 	$friendly_name = "?";
     }
     if ($xml) {
         echo "  <scos_project>\n";
         echo "    <id>$proj->id</id>\n";
-        echo "    <name>$proj->name</name>\n";
+        echo "    <name>$proj->name_lc</name>\n";
     } else {
         echo "
             <tr>
-              <td><a name='$proj->name'>$friendly_name</a></td>
+              <td><a name='$proj->name_lc'>$friendly_name</a></td>
         ";
 
 	$r2 = mysql_query("SELECT count(*) as num "
