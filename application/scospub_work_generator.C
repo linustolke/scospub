@@ -279,9 +279,12 @@ process_svn_urls()
 
 
 
-// create one new job
+// Called once for each tool configured for a project when
+// the source of the project is updated.
 //
-int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
+int make_job(const SCOS_PROJECT project,
+	     const TEAM team,
+	     const SCOS_TOOL tool,
 	     revisions_map_type svn_revisions)
 {
     // Files to create:
@@ -298,7 +301,7 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
     sprintf(name,
 	    "%s_%s_%d_%d_t%d",
 	    tool.name,
-	    project.name,
+	    team.name_lc,
 	    start_time,
 	    seqno++,
 	    tool.id);
@@ -325,7 +328,7 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
 
     // TODO: Hardcoded
     f << "<" JOB_TAG ">\n";
-    f << "  <" TAG_PROJECT ">" << project.name << "</" TAG_PROJECT ">\n";
+    f << "  <" TAG_PROJECT " id='" << project.id <<  "'>" << team.name_lc << "</" TAG_PROJECT ">\n";
     f << "  <" TAG_TOOL ">" << tool.name << "</" TAG_TOOL ">\n";
     f << "  <" TAG_TOOLID ">" << tool.id << "</" TAG_TOOLID ">\n";
     f << "  <" TAG_CONFIG ">" << tool.config << "</" TAG_CONFIG ">\n";
@@ -343,7 +346,7 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
 	f << "    <" TAG_SVN ">\n";
 	f << "      <" TAG_URL ">" << source.url << "</" TAG_URL ">\n";
 
-	string checkoutdir = project.name;
+	string checkoutdir = team.name_lc;
 	checkoutdir += (source.url + strlen(source.rooturl));
 	f << "      <" TAG_CHECKOUTDIR ">" << checkoutdir << "</" TAG_CHECKOUTDIR ">\n";
 	f << "      <" TAG_USERNAME ">" << source.username << "</" TAG_USERNAME ">\n";
@@ -368,7 +371,7 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
     f << " com.puppycrawl.tools.checkstyle.Main";
     f << " -c checkstyle-sun_checks.xml";
     // TODO: Part url! checkoutdir!
-    f << " -r /tmp/scospub/" << project.name;
+    f << " -r /tmp/scospub/" << team.name_lc;
     f << "</" TAG_COMMAND_LINE ">\n";
     f << "    <" TAG_IGNORE_EXIT ">1</" TAG_IGNORE_EXIT ">\n";
     f << "  </" TAG_TASK_JAVA ">\n";
@@ -423,12 +426,6 @@ int make_job(const SCOS_PROJECT project, const SCOS_TOOL tool,
         num_infiles,
         config
     );
-
-    while (!source.enumerate(clause)) {
-	source.lastrevision = svn_revisions[source.id];
-	source.update();
-    }
-    source.end_enumerate();
 }
 
 
@@ -445,8 +442,13 @@ void main_loop()
 	{
 	    process_svn_urls();
 
+	    DB_TEAM team;
+
+	    team.lookup_id(project.team);
+
 	    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-				"Processing project %s\n", project.name
+				"Processing project %s (projid %d)\n",
+				team.name, project.id
 		    );
 
 	    check_stop_daemons();
@@ -484,9 +486,10 @@ void main_loop()
 		{
 		    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
 					"Cannot fetch SVN information for %s "
-					"(project %s).\n",
+					"(%s (projid %d)).\n",
 					source.url,
-					project.name);
+					team.name,
+					project.id);
 		    errors++;
 		    continue;
 		}
@@ -548,13 +551,20 @@ void main_loop()
 		    {
 			// Creat one job per tool.
 			log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-					    "Creating job for %s %s %s.\n",
-					    project.name,
+					    "Creating job for %s (%d) %s %s.\n",
+					    team.name,
+					    project.id,
 					    tool.name,
 					    tool.config
 			    );
-			make_job(project, tool, svn_revisions);
+			make_job(project, team, tool, svn_revisions);
 		    }
+
+		    while (!source.enumerate(clause)) {
+			source.lastrevision = svn_revisions[source.id];
+			source.update();
+		    }
+		    source.end_enumerate();
 		}
 
 		// Start putting off after 24 hours
@@ -563,12 +573,22 @@ void main_loop()
 		    // don't immediately poll it again.
 		    // For every minute above the 24 hours, delay two extra
 		    // seconds (a factor 30).
+		    // 25 hours will cause a poll delay of two minutes.
 		    project.delay = (not_changed_in - 24 * 3600) / 30;
+
+		    // We never delay more than 40 hours
+#define MAX_DELAY (40 * 3600)
+		    if (project.delay > MAX_DELAY)
+		    {
+			project.delay = MAX_DELAY;
+		    }
 
 		    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
 					"Delaying next processing of project "
-					"%s for %d:%02d:%02d.\n",
-					project.name,
+					"%s (projid %d) "
+					"for at least %02d:%02d:%02d.\n",
+					team.name,
+					project.id,
 					project.delay / 3600,
 					(project.delay / 60) % 60,
 					project.delay % 60
@@ -578,8 +598,9 @@ void main_loop()
 		}
 
 		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-				    "Processing project %s done\n",
-				    project.name
+				    "Processing project %s (projid %d) done\n",
+				    team.name,
+				    project.id
 		    );
 	    }
 	}

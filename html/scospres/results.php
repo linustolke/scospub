@@ -23,15 +23,20 @@ if (!$projid) {
         <a href='projects.php'>".tr(SCOSP_ALL_PROJECTS)."</a><br>
     ";
 } else {
-    $result = mysql_query("SELECT * FROM scos_project WHERE id=$projid");
+    $result = mysql_query('SELECT scos_project.id as id, '
+        . 'team.name as name, '
+        . 'name_lc '
+        . 'FROM scos_project, team '
+        . "WHERE scos_project.id=$projid "
+        . 'AND scos_project.team = team.id');
 
     while ($proj = mysql_fetch_object($result)) {
 	if ($xml) {
 	    echo "  <id>$proj->id</id>\n";
-	    echo "  <name>$proj->name</name>\n";
+	    echo "  <name>$proj->name_lc</name>\n";
 	    echo "  <results>\n";
 	} else {
-	    echo "  <b><a href='projects.php#$proj->name'>$proj->name</a>:</b>\n";
+	    echo "  <b><a href='projects.php#$proj->name_lc'>$proj->name</a>:</b>\n";
 	    start_table();
 	    echo "
 		<tr>

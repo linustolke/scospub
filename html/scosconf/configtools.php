@@ -36,12 +36,14 @@ if ($commit > 0) {
 
 page_head(tr(SCOSC_TITLE));
 
-$result = mysql_query("SELECT * FROM scos_project WHERE id=$projid");
+$result = mysql_query('SELECT * FROM scos_project, team '
+    . "WHERE scos_project.id=$projid "
+    . 'AND scos_project.team = team.id');
 $proj = mysql_fetch_object($result);
 mysql_free_result($result);
 
 echo tr(SCOSC_CONFIGURE_TOOLS_DESCRIPTION)."<p>
-$proj->name ($proj->user_friendly_name):";
+$proj->name:";
 
 // Lets put the current configuration in an array.
 $result = mysql_query("SELECT * FROM scos_tool WHERE project=$projid");

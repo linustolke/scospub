@@ -7,11 +7,12 @@ require_once("../inc/translation.inc");
 init_session();
 db_init();
 
+// TODO: Create new projects!
+
 $project = $_REQUEST["project"];
 $name = $_REQUEST["name"];
 
 if ($name && $name != "") {
-    $userfn = $_REQUEST["user_friendly_name"];
     if ($_REQUEST["active"]) {
 	$active = 1;
     } else {
@@ -22,11 +23,11 @@ if ($name && $name != "") {
     if ($project && $project > 0) {
         // Update!
         mysql_query("UPDATE scos_project "
-	    . "SET name='$name', user_friendly_name='$userfn', active='$active' "
+	    . "SET active='$active' "
 	    . "WHERE id=$project");
     } else {
 	mysql_query("INSERT INTO scos_project "
-	    . "SET name='$name', user_friendly_name='$userfn', active='$active'");
+	    . "SET active='$active'");
     }
 
     header("Location: projects.php");
@@ -43,8 +44,6 @@ if ($project && $project > 0) {
     $result = mysql_query("SELECT * FROM scos_project WHERE id=$project");
 
     if ($line = mysql_fetch_object($result)) {
-	$name = $line->name;
-	$userfn = $line->user_friendly_name;
 	$active = $line->active;
     }
     mysql_free_result($result);
@@ -61,14 +60,6 @@ if ($project && $project > 0) {
 
 echo "
   <TABLE>
-    <TR>
-      <TD>Name:</TD>
-      <TD><INPUT type='text' name='name' value='$name'/></TD>
-    </TR>
-    <TR>
-      <TD>User Friendly Name:</TD>
-      <TD><INPUT type='text' name='user_friendly_name' value='$userfn'/></TD>
-    </TR>
     <TR>
       <TD>Active:</TD>
       <TD><INPUT type='checkbox' name='active' ";

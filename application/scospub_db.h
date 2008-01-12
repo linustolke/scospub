@@ -3,8 +3,7 @@
 // class to represent a record from the scos_project table
 struct SCOS_PROJECT {
     int id;
-    char name[256];
-    char user_friendly_name[256];
+    int team;
     int active;
     int delay;
 
