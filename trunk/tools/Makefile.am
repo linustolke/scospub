@@ -1,5 +1,7 @@
 FILES = \
-	checkstyle-all-4.3.jar checkstyle-sun_checks.xml
+	checkstyle-all-4.3.jar checkstyle-sun_checks.xml \
+	findbugs-0.7.4.jar \
+	findbugs-1.3.1.jar
 
 TOOLDIR = $(PROJECT_DIR)/scospub/tools
 
