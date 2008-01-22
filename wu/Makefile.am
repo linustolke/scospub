@@ -8,3 +8,4 @@ install-data-local:
 	  $(INSTALL_DATA) $${res} $(PROJECT_DIR)/templates; \
 	done
 	$(INSTALL_DATA) checkstyle_wu $(PROJECT_DIR)/templates
+	$(INSTALL_DATA) findbugs_wu $(PROJECT_DIR)/templates

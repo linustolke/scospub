@@ -1,0 +1,19 @@
+<file_info>
+    <number>0</number>
+</file_info>
+<file_info>
+    <number>1</number>
+</file_info>
+<workunit>
+    <file_ref>
+        <file_number>0</file_number>
+        <open_name>sc.xml</open_name>
+    </file_ref>
+    <file_ref>
+        <file_number>1</file_number>
+        <open_name>findbugs-0.7.4.jar</open_name>
+	<copy_file/>
+    </file_ref>
+    <rsc_fpops_bound>1000000000000</rsc_fpops_bound>
+    <rsc_fpops_est>1000000000000</rsc_fpops_est>
+</workunit>

@@ -73,7 +73,6 @@ using std::string;
 
 // globals
 //
-char* wu_template = NULL;
 DB_APP app;
 int start_time;
 SCHED_CONFIG config;
@@ -326,7 +325,6 @@ int make_job(const SCOS_PROJECT project,
         return ERR_FOPEN;
     }
 
-    // TODO: Hardcoded
     f << "<" JOB_TAG ">\n";
     f << "  <" TAG_PROJECT " id='" << project.id <<  "'>" << team.name_lc << "</" TAG_PROJECT ">\n";
     f << "  <" TAG_TOOL ">" << tool.name << "</" TAG_TOOL ">\n";
@@ -366,12 +364,51 @@ int make_job(const SCOS_PROJECT project,
     f << "</" TAG_STDERR_FILENAME ">\n";
 
     f << "    <" TAG_COMMAND_LINE ">";
-    // TODO: Mapping tool to application?
-    f << "-cp checkstyle-all-4.3.jar";
-    f << " com.puppycrawl.tools.checkstyle.Main";
-    f << " -c checkstyle-sun_checks.xml";
-    // TODO: Part url! checkoutdir!
-    f << " -r /tmp/scospub/" << team.name_lc;
+
+    // Mapping tool to application!
+    if (strcmp(tool.name, "checkstyle") == 0) {
+	f << "-cp checkstyle-all-4.3.jar";
+	f << " com.puppycrawl.tools.checkstyle.Main";
+
+	if (tool.config == "sunchecks") {
+	    f << " -c checkstyle-sun_checks.xml";
+	} else {
+	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
+				"unknown config %s for tool %s in project %s.\n",
+				tool.config,
+				tool.name,
+				team.name_lc);
+	    exit(1);
+	}
+
+	f << " -r /tmp/scospub/" << team.name_lc;
+    } else if (strcmp(tool.name, "findbugs") == 0) {
+	// This is the textui version.
+
+	f << " -Xmx256M";
+
+        if (strcmp(tool.config, "0.7.4") == 0) {
+	    f << " -jar findbugs-0.7.4.jar";
+	} else if (strcmp(tool.config, "1.3.1") == 0) {
+	    f << " -jar findbugs-1.3.1.jar";
+	} else {
+	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
+				"unknown config %s for tool %s in project %s.\n",
+				tool.config,
+				tool.name,
+				team.name_lc);
+	    exit(1);
+	}
+
+	// TODO: Add the argument.
+    } else {
+	log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
+			    "unknown tool %s in project %s.\n",
+			    tool.name,
+			    team.name_lc);
+	exit(1);
+    }
+
     f << "</" TAG_COMMAND_LINE ">\n";
     f << "    <" TAG_IGNORE_EXIT ">1</" TAG_IGNORE_EXIT ">\n";
     f << "  </" TAG_TASK_JAVA ">\n";
@@ -396,22 +433,76 @@ int make_job(const SCOS_PROJECT project,
     wu.max_total_results = REPLICATION_FACTOR*8;
     wu.max_success_results = REPLICATION_FACTOR*4;
 
-    const int num_infiles = 3;
+    int num_infiles;
+    if (strcmp(tool.name, "checkstyle") == 0) {
+	num_infiles = 3;
+    } else if (strcmp(tool.name, "findbugs") == 0) {
+	num_infiles = 2;
+    } else {
+	log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
+			    "unknown tool %s in project %s (shouldn't happen).\n",
+			    tool.name,
+			    team.name_lc);
+	exit (1);
+    }
     const char * infiles[num_infiles];
     infiles[0] = name;
-    infiles[1] = "checkstyle-all-4.3.jar";
-    infiles[2] = "checkstyle-sun_checks.xml";
 
-    // TODO: Hardcoded!
-    if (wu_template == NULL)
-    {
-        // TODO: Mapping tool to wu file?
+    if (strcmp(tool.name, "checkstyle") == 0) {
+	infiles[1] = "checkstyle-all-4.3.jar";
 
-        if (read_file_malloc("../templates/checkstyle_wu", wu_template))
-	{
-	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL, "can't read WU template\n");
+	if (tool.config == "sunchecks") {
+	    infiles[2] = "checkstyle-sun_checks.xml";
+	} else {
+	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
+				"unknown config %s for tool %s in project %s (shouldn't happen).\n",
+				tool.config,
+				tool.name,
+				team.name_lc);
 	    exit(1);
 	}
+    } else if (strcmp(tool.name, "findbugs") == 0) {
+	if (strcmp(tool.config, "0.7.4") == 0) {
+	    infiles[1] = "findbugs-0.7.4.jar";
+	} else if (strcmp(tool.config, "1.3.1") == 0) {
+	    infiles[1] = "findbugs-1.3.1.jar";
+	} else {
+	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
+				"unknown config %s for tool %s in project %s (shouldn't happen.\n",
+				tool.config,
+				tool.name,
+				team.name_lc);
+	    exit(1);
+	}
+    } else {
+	log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
+			    "unknown tool %s in project %s (shouldn't happen).\n",
+			    tool.name,
+			    team.name_lc);
+	exit(1);
+    }
+
+
+    char* wu_template = NULL;
+
+    if (strcmp(tool.name, "checkstyle") == 0) {
+	if (read_file_malloc("../templates/checkstyle_wu", wu_template))
+	{
+	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL, "can't read WU template for checkstyle\n");
+	    exit(1);
+	}
+    } else if (strcmp(tool.name, "findbugs") == 0) {
+	if (read_file_malloc("../templates/findbugs_wu", wu_template))
+	{
+	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL, "can't read WU template for findbugs\n");
+	    exit(1);
+	}
+    } else {
+	log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
+			    "unknown tool %s in project %s (shouldn't happen).\n",
+			    tool.name,
+			    team.name_lc);
+	exit(1);
     }
 
     // Register the job with BOINC
@@ -426,6 +517,8 @@ int make_job(const SCOS_PROJECT project,
         num_infiles,
         config
     );
+
+    free(wu_template);
 }
 
 

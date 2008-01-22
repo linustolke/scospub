@@ -82,3 +82,5 @@ create table scos_result_source (
 INSERT INTO scos_tool
     SET project=1, name='checkstyle', config='sunchecks', active=true;
 
+INSERT INTO scos_tool
+    SET project=1, name='findbugs', config='0.7.4', active=true;
