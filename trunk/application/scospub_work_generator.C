@@ -52,6 +52,7 @@
 #include <fstream>
 
 #include <map>
+#include <list>
 
 #include "boinc_db.h"
 #include "error_numbers.h"
@@ -70,6 +71,7 @@
 #define MAX_LINE_LENGTH 500
 
 using std::string;
+using std::list;
 
 // globals
 //
@@ -78,6 +80,154 @@ int start_time;
 SCHED_CONFIG config;
 
 typedef std::map<const int, int> revisions_map_type;
+
+
+// Interface to keep tool info together.
+class tooldetails {
+public:
+    virtual void write_command_line(std::ofstream& f) const = 0;
+    virtual const list<string> get_infiles() const = 0;
+    virtual const char * get_wu_template() = 0;
+
+private:
+    static std::map<string, tooldetails*> arch;
+    static string calculate_index(const SCOS_TOOL * toolp);
+public:
+    static void put(const SCOS_TOOL *, tooldetails *);
+    static tooldetails* lookup(const SCOS_TOOL *);
+};
+std::map<string, tooldetails*> tooldetails::arch;
+
+string tooldetails::calculate_index(const SCOS_TOOL * toolp)
+{
+    string id = "";
+    id += toolp->name;
+    id += "/";
+    id += toolp->config;
+
+    return id;
+}
+
+void tooldetails::put(const SCOS_TOOL * toolp, tooldetails * tdetails)
+{
+    arch[calculate_index(toolp)] = tdetails;
+}
+
+tooldetails* tooldetails::lookup(const SCOS_TOOL * toolp)
+{
+    return arch[calculate_index(toolp)];
+}
+
+
+// Abstract base class
+class abstract_tooldetails : tooldetails
+{
+private:
+    list<string> infiles;
+    char * wu_template;
+
+protected:
+    void add_file(string str)
+    {
+	infiles.push_back("checkstyle-all-4.3.jar");
+    }
+
+    void put(const char * toolname, const char * config)
+    {
+	SCOS_TOOL tool;
+	strcpy(tool.name, toolname);
+	strcpy(tool.config, config);
+	tooldetails::put(&tool, this);
+    }
+
+public:
+    abstract_tooldetails(const char * wu_path)
+    {
+	if (read_file_malloc(wu_path, wu_template))
+	{
+	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL, "can't read WU template for checkstyle\n");
+	    exit(1);
+	}
+    }
+
+    virtual const list<string> get_infiles() const
+    {
+	return infiles;
+    }
+
+    virtual const char * get_wu_template()
+    {
+	return wu_template;
+    }
+};
+
+// Checkstyle
+class toold_checkstyle_sunchecks : abstract_tooldetails
+{
+public:
+    toold_checkstyle_sunchecks()
+	: abstract_tooldetails("../templates/checkstyle_wu")
+    {
+	add_file("checkstyle-all-4.3.jar");
+	add_file("checkstyle-sun_checks.xml");
+
+	put("checkstyle", "sunchecks");
+    }
+
+    virtual void write_command_line(std::ofstream& f) const
+    {
+	f << "-cp checkstyle-all-4.3.jar";
+	f << " com.puppycrawl.tools.checkstyle.Main";
+	f << " -c checkstyle-sun_checks.xml";
+    }
+} td_cssc;
+
+class toold_findbugs : abstract_tooldetails
+{
+private:
+    const char * jar;
+
+protected:
+    void add_jar(const char * file)
+    {
+	jar = file;
+	add_file(jar);
+    }
+
+public:
+    toold_findbugs(const char * version)
+	: abstract_tooldetails("../templates/findbugs_wu")
+    {
+	put("findbugs", version);
+    }
+
+    virtual void write_command_line(std::ofstream& f) const
+    {
+	f << " -jar " << jar << " ";
+    }
+};
+
+class toold_findbugs074 : toold_findbugs
+{
+public:
+    toold_findbugs074()
+	: toold_findbugs("0.7.4")
+
+    {
+	add_jar("findbugs-0.7.4.jar");
+    }
+} td_fb074;
+
+class toold_findbugs131 : toold_findbugs
+{
+public:
+    toold_findbugs131()
+	: toold_findbugs("1.3.1")
+    {
+	add_jar("findbugs-1.3.1.jar");
+    }
+} td_fb131;
+
 
 
 //
@@ -365,49 +515,9 @@ int make_job(const SCOS_PROJECT project,
 
     f << "    <" TAG_COMMAND_LINE ">";
 
-    // Mapping tool to application!
-    if (strcmp(tool.name, "checkstyle") == 0) {
-	f << "-cp checkstyle-all-4.3.jar";
-	f << " com.puppycrawl.tools.checkstyle.Main";
+    tooldetails * tooldp = tooldetails::lookup(&tool);
 
-	if (tool.config == "sunchecks") {
-	    f << " -c checkstyle-sun_checks.xml";
-	} else {
-	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
-				"unknown config %s for tool %s in project %s.\n",
-				tool.config,
-				tool.name,
-				team.name_lc);
-	    exit(1);
-	}
-
-	f << " -r /tmp/scospub/" << team.name_lc;
-    } else if (strcmp(tool.name, "findbugs") == 0) {
-	// This is the textui version.
-
-	f << " -Xmx256M";
-
-        if (strcmp(tool.config, "0.7.4") == 0) {
-	    f << " -jar findbugs-0.7.4.jar";
-	} else if (strcmp(tool.config, "1.3.1") == 0) {
-	    f << " -jar findbugs-1.3.1.jar";
-	} else {
-	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
-				"unknown config %s for tool %s in project %s.\n",
-				tool.config,
-				tool.name,
-				team.name_lc);
-	    exit(1);
-	}
-
-	// TODO: Add the argument.
-    } else {
-	log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
-			    "unknown tool %s in project %s.\n",
-			    tool.name,
-			    team.name_lc);
-	exit(1);
-    }
+    tooldp->write_command_line(f);
 
     f << "</" TAG_COMMAND_LINE ">\n";
     f << "    <" TAG_IGNORE_EXIT ">1</" TAG_IGNORE_EXIT ">\n";
@@ -433,83 +543,22 @@ int make_job(const SCOS_PROJECT project,
     wu.max_total_results = REPLICATION_FACTOR*8;
     wu.max_success_results = REPLICATION_FACTOR*4;
 
-    int num_infiles;
-    if (strcmp(tool.name, "checkstyle") == 0) {
-	num_infiles = 3;
-    } else if (strcmp(tool.name, "findbugs") == 0) {
-	num_infiles = 2;
-    } else {
-	log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
-			    "unknown tool %s in project %s (shouldn't happen).\n",
-			    tool.name,
-			    team.name_lc);
-	exit (1);
-    }
+    int num_infiles = 1 + tooldp->get_infiles().size();
     const char * infiles[num_infiles];
     infiles[0] = name;
 
-    if (strcmp(tool.name, "checkstyle") == 0) {
-	infiles[1] = "checkstyle-all-4.3.jar";
-
-	if (tool.config == "sunchecks") {
-	    infiles[2] = "checkstyle-sun_checks.xml";
-	} else {
-	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
-				"unknown config %s for tool %s in project %s (shouldn't happen).\n",
-				tool.config,
-				tool.name,
-				team.name_lc);
-	    exit(1);
-	}
-    } else if (strcmp(tool.name, "findbugs") == 0) {
-	if (strcmp(tool.config, "0.7.4") == 0) {
-	    infiles[1] = "findbugs-0.7.4.jar";
-	} else if (strcmp(tool.config, "1.3.1") == 0) {
-	    infiles[1] = "findbugs-1.3.1.jar";
-	} else {
-	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
-				"unknown config %s for tool %s in project %s (shouldn't happen.\n",
-				tool.config,
-				tool.name,
-				team.name_lc);
-	    exit(1);
-	}
-    } else {
-	log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
-			    "unknown tool %s in project %s (shouldn't happen).\n",
-			    tool.name,
-			    team.name_lc);
-	exit(1);
-    }
-
-
-    char* wu_template = NULL;
-
-    if (strcmp(tool.name, "checkstyle") == 0) {
-	if (read_file_malloc("../templates/checkstyle_wu", wu_template))
-	{
-	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL, "can't read WU template for checkstyle\n");
-	    exit(1);
-	}
-    } else if (strcmp(tool.name, "findbugs") == 0) {
-	if (read_file_malloc("../templates/findbugs_wu", wu_template))
-	{
-	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL, "can't read WU template for findbugs\n");
-	    exit(1);
-	}
-    } else {
-	log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
-			    "unknown tool %s in project %s (shouldn't happen).\n",
-			    tool.name,
-			    team.name_lc);
-	exit(1);
+    list<string>::const_iterator it = tooldp->get_infiles().begin();
+    for (int i = 0;
+	 it != tooldp->get_infiles().end();
+	 it++, i++) {
+	infiles[i] = (*it).c_str();
     }
 
     // Register the job with BOINC
     //
     create_work(
         wu,
-        wu_template,
+        tooldp->get_wu_template(),
 	// TODO: Hardcoded project and tool
         "templates/scospub2_result",
         "../templates/scospub2_result",
@@ -517,10 +566,7 @@ int make_job(const SCOS_PROJECT project,
         num_infiles,
         config
     );
-
-    free(wu_template);
 }
-
 
 
 void main_loop()
