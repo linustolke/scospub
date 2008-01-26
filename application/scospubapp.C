@@ -1,6 +1,6 @@
 // Static Checks for Open Source Projects Using Boinc
 // http://scospub.googlecode.com
-// Copyright (C) 2007 Linus Tolke
+// Copyright (C) 2007, 2008 Linus Tolke
 //
 // This is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -478,8 +478,6 @@ int job_type::parse() {
 	else if (xp.parse_string(tag, TAG_PROJECT, project_name))
 	    continue;
 	else if (xp.parse_string(tag, TAG_TOOL, tool))
-	    continue;
-	else if (xp.parse_string(tag, TAG_TOOLID, toolid))
 	    continue;
 	else if (xp.parse_string(tag, TAG_CONFIG, config))
 	    continue;

@@ -1,5 +1,5 @@
 // SCOSPUB - tools supporting Open Source development.
-// Copyright (C) 2007 Linus Tolke
+// Copyright (C) 2007, 2008 Linus Tolke
 //
 // This is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -86,7 +86,7 @@ typedef std::map<const int, int> revisions_map_type;
 class tooldetails {
 public:
     virtual void write_command_line(std::ofstream& f) const = 0;
-    virtual const list<string> get_infiles() const = 0;
+    virtual const list<string>* get_infiles() const = 0;
     virtual const char * get_wu_template() = 0;
 
 private:
@@ -129,7 +129,7 @@ private:
 protected:
     void add_file(string str)
     {
-	infiles.push_back("checkstyle-all-4.3.jar");
+	infiles.push_back(str);
     }
 
     void put(const char * toolname, const char * config)
@@ -150,9 +150,9 @@ public:
 	}
     }
 
-    virtual const list<string> get_infiles() const
+    virtual const list<string>* get_infiles() const
     {
-	return infiles;
+	return &infiles;
     }
 
     virtual const char * get_wu_template()
@@ -476,9 +476,10 @@ int make_job(const SCOS_PROJECT project,
     }
 
     f << "<" JOB_TAG ">\n";
-    f << "  <" TAG_PROJECT " id='" << project.id <<  "'>" << team.name_lc << "</" TAG_PROJECT ">\n";
-    f << "  <" TAG_TOOL ">" << tool.name << "</" TAG_TOOL ">\n";
-    f << "  <" TAG_TOOLID ">" << tool.id << "</" TAG_TOOLID ">\n";
+    f << "  <" TAG_PROJECT " id='" << project.id <<  "'>"
+      << team.name_lc << "</" TAG_PROJECT ">\n";
+    f << "  <" TAG_TOOL " id='" << tool.id << "'>"
+      << tool.name << "</" TAG_TOOL ">\n";
     f << "  <" TAG_CONFIG ">" << tool.config << "</" TAG_CONFIG ">\n";
 
     DB_SCOS_SOURCE source;
@@ -491,7 +492,7 @@ int make_job(const SCOS_PROJECT project,
     // Mapping a project to url
     f << "  <" TAG_SOURCE ">\n";
     while (!source.enumerate(clause)) {
-	f << "    <" TAG_SVN ">\n";
+	f << "    <" TAG_SVN " id='" << source.id << "'>\n";
 	f << "      <" TAG_URL ">" << source.url << "</" TAG_URL ">\n";
 
 	string checkoutdir = team.name_lc;
@@ -543,15 +544,15 @@ int make_job(const SCOS_PROJECT project,
     wu.max_total_results = REPLICATION_FACTOR*8;
     wu.max_success_results = REPLICATION_FACTOR*4;
 
-    int num_infiles = 1 + tooldp->get_infiles().size();
+    int num_infiles = 1 + tooldp->get_infiles()->size();
     const char * infiles[num_infiles];
     infiles[0] = name;
 
-    list<string>::const_iterator it = tooldp->get_infiles().begin();
-    for (int i = 0;
-	 it != tooldp->get_infiles().end();
+    list<string>::const_iterator it = tooldp->get_infiles()->begin();
+    for (int i = 1;
+	 it != tooldp->get_infiles()->end();
 	 it++, i++) {
-	infiles[i] = (*it).c_str();
+	infiles[i] = it->c_str();
     }
 
     // Register the job with BOINC
