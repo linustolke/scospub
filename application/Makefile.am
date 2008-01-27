@@ -48,7 +48,7 @@ wrapper_LDADD = \
 scospubapp_LDFLAGS = \
     -pthread
 
-scospubapp_SOURCES = scospubapp.C
+scospubapp_SOURCES = scospubapp.C scospub_parse.C
 
 scospubapp_LDADD = \
     -L$(BOINC_DIR)/api \

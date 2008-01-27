@@ -46,11 +46,11 @@
 #include "boinc_api.h"
 #include "diagnostics.h"
 #include "filesys.h"
-#include "parse.h"
 #include "str_util.h"
 #include "util.h"
 #include "error_numbers.h"
 
+#include "scospub_parse.h"
 #include "scospub_xml_tags.h"
 
 #define JOB_FILENAME "sc.xml"
@@ -66,7 +66,7 @@ class TASK {
 public:
     virtual const char * get_application() const = 0;
 
-    virtual int parse(XML_PARSER&) = 0;
+    virtual int parse(sx_parser&) = 0;
     virtual bool poll(int& status) = 0;
     virtual int run() = 0;
     virtual void kill() = 0;
@@ -95,13 +95,13 @@ protected:
     void set_application(const char * str) { application = str; }
     void set_command_line(const char * str) { command_line = str; }
 
-    bool parse_in_out_files(XML_PARSER& xp, char * tag);
-    bool parse_cmd_line(XML_PARSER& xp, char * tag);
+    bool parse_in_out_files(sx_parser& xp, char * tag);
+    bool parse_cmd_line(sx_parser& xp, char * tag);
 
 public:
     // From TASK
     virtual const char * get_application() const;
-    virtual int parse(XML_PARSER&);
+    virtual int parse(sx_parser&);
     virtual int run();
     virtual bool poll(int& status);
     virtual void kill();
@@ -115,7 +115,7 @@ class javaTASK : public processTASK
 {
 public:
     // From TASK
-    virtual int parse(XML_PARSER&);
+    virtual int parse(sx_parser&);
     virtual int run();
 };
 
@@ -129,6 +129,7 @@ private:
 class svn_source : public source
 {
 private:
+    int id;
     string url;
     string checkoutdir;
     string username;
@@ -136,7 +137,8 @@ private:
     int revision;
 
 public:
-    virtual int parse(XML_PARSER&);
+    svn_source(int i) : id(i) {};
+    virtual int parse(sx_parser&);
     virtual int run();
 };
 
@@ -148,7 +150,7 @@ private:
 public:
     void push_back_all(vector<TASK*>& tasks) const;
 
-    virtual int parse(XML_PARSER&);
+    virtual int parse(sx_parser&);
 };
 
 
@@ -156,8 +158,9 @@ class job_type
 {
 private:
     string project_name;
+    int projectid;
     string tool;
-    string toolid;
+    int toolid;
     string config;
     
     int ntasks;
@@ -176,7 +179,7 @@ bool app_suspended = false;
 
 
 // Parse a svn source entry
-int svn_source::parse(XML_PARSER& xp)
+int svn_source::parse(sx_parser& xp)
 {
     char tag[1024];
     bool is_tag;
@@ -244,7 +247,7 @@ int svn_source::run()
 
 
 // Parse the source
-int sources::parse(XML_PARSER& xp)
+int sources::parse(sx_parser& xp)
 {
     char tag[1024];
     bool is_tag;
@@ -260,13 +263,15 @@ int sources::parse(XML_PARSER& xp)
             continue;
         }
 
+	int id;
+
         if (!strcmp(tag, "/" TAG_SOURCE))
 	{
             return 0;
         }
-	else if (!strcmp(tag, TAG_SVN))
+	else if (xp.match_tag(tag, TAG_SVN, id))
 	{
-	    svn_source * source = new svn_source();
+	    svn_source * source = new svn_source(id);
 	    int retval = source->parse(xp);
 	    if (!retval) {
 		sources.push_back(source);
@@ -294,7 +299,7 @@ const char * processTASK::get_application() const
     return application.c_str();
 }
 
-bool processTASK::parse_in_out_files(XML_PARSER& xp, char * tag)
+bool processTASK::parse_in_out_files(sx_parser& xp, char * tag)
 {
     if (xp.parse_string(tag, TAG_STDIN_FILENAME, stdin_filename))
 	return true;
@@ -305,7 +310,7 @@ bool processTASK::parse_in_out_files(XML_PARSER& xp, char * tag)
     return false;
 }
 
-bool processTASK::parse_cmd_line(XML_PARSER& xp, char * tag)
+bool processTASK::parse_cmd_line(sx_parser& xp, char * tag)
 {
     if (xp.parse_string(tag, TAG_COMMAND_LINE, command_line))
 	return true;
@@ -326,7 +331,7 @@ bool processTASK::parse_cmd_line(XML_PARSER& xp, char * tag)
 
 
 // Parse a task!
-int processTASK::parse(XML_PARSER& xp)
+int processTASK::parse(sx_parser& xp)
 {
     char tag[1024];
     bool is_tag;
@@ -358,7 +363,7 @@ int processTASK::parse(XML_PARSER& xp)
 
 
 // Parse a java task!
-int javaTASK::parse(XML_PARSER& xp)
+int javaTASK::parse(sx_parser& xp)
 {
     char tag[1024];
     bool is_tag;
@@ -422,7 +427,7 @@ int job_type::parse() {
         return ERR_FOPEN;
     }
     mf.init_file(f);
-    XML_PARSER xp(&mf);
+    sx_parser xp(&mf);
 
     if (!xp.parse_start(JOB_TAG))
 	return ERR_XML_PARSE;
@@ -475,9 +480,9 @@ int job_type::parse() {
 
 	    continue;
         }
-	else if (xp.parse_string(tag, TAG_PROJECT, project_name))
+	else if (xp.parse_string(tag, TAG_PROJECT, project_name, projectid))
 	    continue;
-	else if (xp.parse_string(tag, TAG_TOOL, tool))
+	else if (xp.parse_string(tag, TAG_TOOL, tool, toolid))
 	    continue;
 	else if (xp.parse_string(tag, TAG_CONFIG, config))
 	    continue;
