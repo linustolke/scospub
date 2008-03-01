@@ -11,6 +11,9 @@ The program regularly:
   * Contact the source repositories to check for changes.
   * If any changes is seen in the repository, a new work unit is created and fed into the boinc structure.
 
+It also regularly:
+  * Checks to see if there is a new source path configured and tests that for validity.
+
 == Handle result from [Application] ==
 
 When the [Application] has uploaded a result, the result is validated.
@@ -20,7 +23,7 @@ Then the information is assimilated.
 The scospub_assimilator program takes care of this.
 The result is then added into the scospub-specific tables in the database and can then be seen by the result presentation.
 
-== CentralHost web server installation
+== CentralHost web server installation ==
 
 The presentation of results and the configuration of projects uses
 the boinc server web pages.
