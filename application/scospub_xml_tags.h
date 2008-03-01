@@ -34,6 +34,8 @@
 #define TAG_TASK_JAVA	"javatask"
 #define TAG_APPLICATION	"application"
 #define TAG_COMMAND_LINE	"command_line"
+#define TAG_ARGS		"args"
+#define TAG_FILES		this is not currently compilable
 #define TAG_IGNORE_EXIT		"ignore_exit"
 #define TAG_STDIN_FILENAME	"stdin_filename"
 #define TAG_STDOUT_FILENAME	"stdout_filename"
