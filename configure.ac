@@ -51,7 +51,10 @@ if [ $GXX = yes ]; then
 fi
 ]
 
-WITH_MYSQL()
+AC_CHECK_MYSQL
+if test "${no_mysql}" = yes; then
+  AC_MSG_ERROR([ mysql not found.])
+fi
 
 # Checks for libraries.
 
