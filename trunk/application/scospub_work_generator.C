@@ -86,9 +86,18 @@ typedef std::map<const int, int> revisions_map_type;
 class tooldetails {
 public:
     virtual void write_command_line(std::ofstream& f) const = 0;
+    virtual void write_file_args(std::ofstream& f) const = 0;
+
     virtual const list<string>* get_infiles() const = 0;
+
+    // The wu template
     virtual const char * get_wu_template() = 0;
 
+    // The filename of the result template
+    virtual const char * get_result_template_filename() = 0;
+
+
+    // Static members and methods to maintain the register of the tools:
 private:
     static std::map<string, tooldetails*> arch;
     static string calculate_index(const SCOS_TOOL * toolp);
@@ -159,6 +168,15 @@ public:
     {
 	return wu_template;
     }
+
+    virtual const char * get_result_template_filename()
+    {
+	return "templates/scospub2_result";
+    }
+
+    virtual void write_file_args(std::ofstream& f) const
+    {
+    }
 };
 
 // Checkstyle
@@ -205,6 +223,11 @@ public:
     {
 	f << " -jar " << jar << " ";
     }
+
+    virtual void write_file_args(std::ofstream& f) const
+    {
+	f << "*.jar";
+    }
 };
 
 class toold_findbugs074 : toold_findbugs
@@ -212,7 +235,6 @@ class toold_findbugs074 : toold_findbugs
 public:
     toold_findbugs074()
 	: toold_findbugs("0.7.4")
-
     {
 	add_jar("findbugs-0.7.4.jar");
     }
@@ -521,6 +543,13 @@ int make_job(const SCOS_PROJECT project,
     tooldp->write_command_line(f);
 
     f << "</" TAG_COMMAND_LINE ">\n";
+
+    f << "    <" TAG_ARGS ">";
+
+    tooldp->write_file_args(f);
+
+    f << "</" TAG_ARGS ">\n";
+
     f << "    <" TAG_IGNORE_EXIT ">1</" TAG_IGNORE_EXIT ">\n";
     f << "  </" TAG_TASK_JAVA ">\n";
     f << "</" JOB_TAG ">\n";
@@ -551,18 +580,21 @@ int make_job(const SCOS_PROJECT project,
     list<string>::const_iterator it = tooldp->get_infiles()->begin();
     for (int i = 1;
 	 it != tooldp->get_infiles()->end();
-	 it++, i++) {
+	 it++, i++)
+    {
 	infiles[i] = it->c_str();
     }
+
+    string rel_template_filename = "../";
+    rel_template_filename += tooldp->get_result_template_filename();
 
     // Register the job with BOINC
     //
     create_work(
         wu,
         tooldp->get_wu_template(),
-	// TODO: Hardcoded project and tool
-        "templates/scospub2_result",
-        "../templates/scospub2_result",
+        tooldp->get_result_template_filename(),
+        rel_template_filename.c_str(),
         infiles,
         num_infiles,
         config
@@ -707,41 +739,51 @@ void main_loop()
 		    source.end_enumerate();
 		}
 
-		// Start putting off after 24 hours
-		if (not_changed_in > 24 * 3600) {
-		    // If it was a long time since this project was updated
-		    // don't immediately poll it again.
-		    // For every minute above the 24 hours, delay two extra
-		    // seconds (a factor 30).
-		    // 25 hours will cause a poll delay of two minutes.
-		    project.delay = (not_changed_in - 24 * 3600) / 30;
-
-		    // We never delay more than 40 hours
-#define MAX_DELAY (40 * 3600)
-		    if (project.delay > MAX_DELAY)
-		    {
-			project.delay = MAX_DELAY;
-		    }
-
-		    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-					"Delaying next processing of project "
-					"%s (projid %d) "
-					"for at least %02d:%02d:%02d.\n",
-					team.name,
-					project.id,
-					project.delay / 3600,
-					(project.delay / 60) % 60,
-					project.delay % 60
-			);
-
-		    project.update();
-		}
-
 		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
 				    "Processing project %s (projid %d) done\n",
 				    team.name,
 				    project.id
 		    );
+	    }
+	    else
+	    {
+		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
+				    "Processing project %s (projid %d) "
+				    "aborted. %d errors seen.\n",
+				    team.name,
+				    project.id,
+				    errors
+		    );
+	    }
+
+	    // Start putting off after 24 hours
+	    if (not_changed_in > 24 * 3600) {
+		// If it was a long time since this project was updated
+		// don't immediately poll it again.
+		// For every minute above the 24 hours, delay two extra
+		// seconds (a factor 30).
+		// 25 hours will cause a poll delay of two minutes.
+		project.delay = (not_changed_in - 24 * 3600) / 30;
+
+		// We never delay more than 40 hours
+#define MAX_DELAY (40 * 3600)
+		if (project.delay > MAX_DELAY)
+		{
+		    project.delay = MAX_DELAY;
+		}
+
+		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
+				    "Delaying next processing of project "
+				    "%s (projid %d) "
+				    "for at least %02d:%02d:%02d.\n",
+				    team.name,
+				    project.id,
+				    project.delay / 3600,
+				    (project.delay / 60) % 60,
+				    project.delay % 60
+		    );
+
+		project.update();
 	    }
 	}
 
