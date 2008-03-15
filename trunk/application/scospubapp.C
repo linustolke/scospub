@@ -40,6 +40,7 @@
 #else
 #include <unistd.h>
 #include <sys/wait.h>
+#include <errno.h>
 #include "procinfo.h"
 #endif
 
@@ -62,13 +63,18 @@ using std::string;
 double final_cpu_time = 0.0;
 double checkpoint_cpu = 0.0;
 
+class JOB_INFO {
+public:
+    virtual const char * get_project_name() const = 0;
+};
+
 class TASK {
 public:
     virtual const char * get_application() const = 0;
 
     virtual int parse(sx_parser&) = 0;
     virtual bool poll(int& status) = 0;
-    virtual int run() = 0;
+    virtual int run(JOB_INFO * info) = 0;
     virtual void kill() = 0;
     virtual void stop() = 0;
     virtual void resume() = 0;
@@ -79,6 +85,7 @@ class processTASK : public TASK {
 private:
     string application;
     string command_line;
+    string file_args_unprocessed;
 
     string stdin_filename;
     string stdout_filename;
@@ -98,11 +105,13 @@ protected:
     bool parse_in_out_files(sx_parser& xp, char * tag);
     bool parse_cmd_line(sx_parser& xp, char * tag);
 
+    virtual vector<string> get_processed_args(JOB_INFO * info);
+
 public:
     // From TASK
     virtual const char * get_application() const;
     virtual int parse(sx_parser&);
-    virtual int run();
+    virtual int run(JOB_INFO * info);
     virtual bool poll(int& status);
     virtual void kill();
     virtual void stop();
@@ -116,7 +125,7 @@ class javaTASK : public processTASK
 public:
     // From TASK
     virtual int parse(sx_parser&);
-    virtual int run();
+    virtual int run(JOB_INFO * info);
 };
 
 
@@ -139,7 +148,7 @@ private:
 public:
     svn_source(int i) : id(i) {};
     virtual int parse(sx_parser&);
-    virtual int run();
+    virtual int run(JOB_INFO * info);
 };
 
 class sources
@@ -154,7 +163,7 @@ public:
 };
 
 
-class job_type
+class job_type : JOB_INFO
 {
 private:
     string project_name;
@@ -167,8 +176,12 @@ private:
     double cpu;
 
     vector<TASK*> tasks;
-    
+
 public:
+    virtual const char * get_project_name() const {
+	return project_name.c_str();
+    };
+
     int parse();
 
     void run();
@@ -217,7 +230,7 @@ int svn_source::parse(sx_parser& xp)
 }
 
 
-int svn_source::run()
+int svn_source::run(JOB_INFO * info)
 {
     set_application("/usr/bin/svn"); // TODO: Different for different clients
 
@@ -232,6 +245,8 @@ int svn_source::run()
     command_line += url;
 
     command_line += " /tmp/scospub/";
+    command_line += info->get_project_name();
+    command_line += "/";
     command_line += checkoutdir;
 
     command_line += " --username '";
@@ -242,7 +257,7 @@ int svn_source::run()
 
     set_command_line(command_line.c_str());
 
-    return processTASK::run();
+    return processTASK::run(info);
 }
 
 
@@ -326,6 +341,9 @@ bool processTASK::parse_cmd_line(sx_parser& xp, char * tag)
 	return true;
     }
 
+    if (xp.parse_string(tag, TAG_ARGS, file_args_unprocessed))
+	return true;
+
     return false;
 }
 
@@ -392,12 +410,12 @@ int javaTASK::parse(sx_parser& xp)
     return ERR_XML_PARSE;
 }
 
-int javaTASK::run()
+int javaTASK::run(JOB_INFO * info)
 {
     // TODO: Different depending on the host type.
     set_application("/usr/bin/java");
 
-    return processTASK::run();
+    return processTASK::run(info);
 }
 
 
@@ -510,6 +528,53 @@ int job_type::parse() {
     return ERR_XML_PARSE;
 }
 
+
+vector<string>
+processTASK::get_processed_args(JOB_INFO * info)
+{
+    // Parse through the repository and find files matching
+    // file_args_unprocessed and build strings reflecting their path
+    vector<string> res;
+
+    if (file_args_unprocessed == "")
+    {
+	return res;
+    }
+
+#ifdef _WIN32
+    choke me!
+#else
+    string command =
+	string("find /tmp/scospub/") + info->get_project_name()
+	+ string(" -name ") + file_args_unprocessed
+	+ string(" -print");
+
+    FILE * names = popen(command.c_str(), "r");
+
+    if (names == NULL)
+    {
+	// Some error occured.
+	fprintf(stderr, "Could not run find, error is %s.\n",
+		strerror(errno));
+	return res;
+    }
+
+#define LONGEST_FILENAME 1024
+    char buf[LONGEST_FILENAME];
+    char * readfile;
+
+    while ((readfile = fgets(buf, LONGEST_FILENAME, names)) != NULL)
+    {
+	res.insert(res.end(), string(readfile));
+    }
+
+    pclose(names);
+#endif
+
+    return res;
+}
+
+
 #ifdef _WIN32
 // CreateProcess() takes HANDLEs for the stdin/stdout.
 // We need to use CreateFile() to get them.  Ugh.
@@ -553,10 +618,23 @@ HANDLE win_fopen(const char* path, const char* mode) {
 	return 0;
     }
 }
+
+#else
+
+// Create a copy of the string on the heap.
+// These strings are never freed. Instead we do execv (or exit).
+static char *
+create_malloced_string(const char * str)
+{
+    int len = strlen(str) + 1;
+    char * mallstr = (char *) malloc(len);
+    strlcpy(mallstr, str, len);
+    return mallstr;
+}
 #endif
 
-
-int processTASK::run() {
+int processTASK::run(JOB_INFO * info)
+{
     if (application == "")
     {
 	fprintf(stderr, "The application is not set.\n");
@@ -573,119 +651,137 @@ int processTASK::run() {
 
     boinc_resolve_filename_s(application.c_str(), app_path);
 
+    // Initialize the data structures
 #ifdef _WIN32
     PROCESS_INFORMATION process_info;
     STARTUPINFO startup_info;
-    string command;
 
     memset(&process_info, 0, sizeof(process_info));
     memset(&startup_info, 0, sizeof(startup_info));
-    command = app_path + string(" ") + command_line;
+#else
+    pid = fork();
+    if (pid == -1) {
+        boinc_finish(ERR_FORK);
+    }
+    if (pid != 0) {
+	return 0;
+    }
 
+    // we're in the child process now
+#endif
+
+    vector<string> processed_args = get_processed_args(info);
+    
+    // Initialize the command
+#ifdef _WIN32
+    string command;
+    command = app_path + string(" ") + command_line;
+    for (vector<string>::iterator iter = processed_args.begin();
+	 iter != processed_args.end();
+	 iter++)
+    {
+	command += string(" ") + *iter;
+    }
+#else
+    char * buf = create_malloced_string(app_path.c_str());
+    fprintf(stderr,
+	    "scospubapp: running %s %s\n", buf, command_line.c_str());
+    fflush(stderr);
+
+    // construct argv
+    char* argv[256];
+
+    argv[0] = buf;
+    char * arglist = create_malloced_string(command_line.c_str());
+
+    int argc = parse_command_line(arglist, argv+1);
+    for (vector<string>::iterator iter = processed_args.begin();
+	 iter != processed_args.end();
+	 iter++)
+    {
+	argv[argc++] = create_malloced_string((*iter).c_str());
+    }
+#endif
+
+    // Fix stdin, stdout, and stderr.
+#ifdef _WIN32
     // pass std handles to app
     //
     startup_info.dwFlags = STARTF_USESTDHANDLES;
+#else
+    //
+    // open stdout, stdin if file names are given
+    // NOTE: if the application is restartable,
+    // we should deal with atomicity somehow
+    //
+    // The logging above is done before redirecting stderr
+    // to end up on the scospubapp stderr.
+    //
+    FILE* stdout_file;
+    FILE* stdin_file;
+    FILE* stderr_file;
+
+#endif
     if (stdout_filename != "") {
 	string stdout_path;
 
 	boinc_resolve_filename_s(stdout_filename.c_str(), stdout_path);
+#ifdef _WIN32
 	startup_info.hStdOutput = win_fopen(stdout_path.c_str(), "w");
+#else
+	stdout_file = freopen(stdout_path.c_str(), "w", stdout);
+	if (!stdout_file) return ERR_FOPEN;
+#endif
     }
     if (stdin_filename != "") {
 	string stdin_path;
 
 	boinc_resolve_filename_s(stdin_filename.c_str(), stdin_path);
+#ifdef _WIN32
 	startup_info.hStdInput = win_fopen(stdin_path.c_str(), "r");
+#else
+	stdin_file = freopen(stdin_path.c_str(), "r", stdin);
+	if (!stdin_file) return ERR_FOPEN;
+#endif
     }
     if (stderr_filename != "") {
 	string stderr_path;
 
         boinc_resolve_filename_s(stderr_filename.c_str(), stderr_path);
+#ifdef _WIN32
         startup_info.hStdError = win_fopen(stderr_path.c_str(), "w");
     } else {
         startup_info.hStdError = win_fopen(STDERR_FILE, "a");
+#else
+	stderr_file = freopen(stderr_path.c_str(), "w", stderr);
+	if (!stderr_file) return ERR_FOPEN;
+#endif
     }
              
+    // Create the process
+#ifdef _WIN32
     if (!CreateProcess(
-        app_path.c_str(),
-        (LPSTR)command.c_str(),
-        NULL,
-        NULL,
-        TRUE,		// bInheritHandles
-        CREATE_NO_WINDOW|IDLE_PRIORITY_CLASS,
-        NULL,
-        NULL,
-        &startup_info,
-        &process_info
-    )) {
+	    app_path.c_str(),
+	    (LPSTR)command.c_str(),
+	    NULL,
+	    NULL,
+	    TRUE,		// bInheritHandles
+	    CREATE_NO_WINDOW|IDLE_PRIORITY_CLASS,
+	    NULL,
+	    NULL,
+	    &startup_info,
+	    &process_info
+	    )) {
         return ERR_EXEC;
     }
     pid_handle = process_info.hProcess;
     thread_handle = process_info.hThread;
     SetThreadPriority(thread_handle, THREAD_PRIORITY_IDLE);
 #else
-    int retval, argc;
-    char progname[256], buf[256];
-    char* argv[256];
-    char arglist[4096];
-    FILE* stdout_file;
-    FILE* stdin_file;
-    FILE* stderr_file;
-
-    pid = fork();
-    if (pid == -1) {
-        boinc_finish(ERR_FORK);
-    }
-    if (pid == 0) {
-	// we're in the child process here
-
-        strcpy(buf, app_path.c_str());
-        fprintf(stderr,
-		"scospubapp: running %s %s\n", buf, command_line.c_str());
-	fflush(stderr);
-
-	//
-	// open stdout, stdin if file names are given
-	// NOTE: if the application is restartable,
-	// we should deal with atomicity somehow
-	//
-	// The logging above is done before redirecting stderr
-	// to end up on the scospubapp stderr.
-	//
-	if (stdout_filename != "") {
-	    string stdout_path;
-
-	    boinc_resolve_filename_s(stdout_filename.c_str(), stdout_path);
-	    stdout_file = freopen(stdout_path.c_str(), "w", stdout);
-	    if (!stdout_file) return ERR_FOPEN;
-	}
-	if (stdin_filename != "") {
-	    string stdin_path;
-
-	    boinc_resolve_filename_s(stdin_filename.c_str(), stdin_path);
-	    stdin_file = freopen(stdin_path.c_str(), "r", stdin);
-	    if (!stdin_file) return ERR_FOPEN;
-	}
-        if (stderr_filename != "") {
-	    string stderr_path;
-
-            boinc_resolve_filename_s(stderr_filename.c_str(), stderr_path);
-            stderr_file = freopen(stderr_path.c_str(), "w", stderr);
-            if (!stderr_file) return ERR_FOPEN;
-        }
-
-	// construct argv
-        // TODO: use malloc instead of stack var
-        //
-        argv[0] = buf;
-        strlcpy(arglist, command_line.c_str(), sizeof(arglist));
-        argc = parse_command_line(arglist, argv+1);
-        setpriority(PRIO_PROCESS, 0, PROCESS_IDLE_PRIORITY);
-        retval = execv(buf, argv);
-        exit(ERR_EXEC);
-    }
+    setpriority(PRIO_PROCESS, 0, PROCESS_IDLE_PRIORITY);
+    int retval = execv(buf, argv);
+    exit(ERR_EXEC);
 #endif
-    return 0;
 }
 
 
@@ -901,7 +997,7 @@ void job_type::run()
 
         fprintf(stderr, "task %u starting\n", i);
         checkpoint_cpu = cpu;
-        int retval = task.run();
+        int retval = task.run(this);
         if (retval) {
             fprintf(stderr, "can't run app: %d\n", retval);
             boinc_finish(retval);
