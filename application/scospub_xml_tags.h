@@ -20,6 +20,7 @@
 #define JOB_TAG "scospub"
 
 #define TAG_PROJECT	"project"
+#define TAG_TEAM	"team"
 #define TAG_TOOL	"tool"
 #define TAG_CONFIG	"config"
 #define TAG_SOURCE	"source"

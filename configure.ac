@@ -1,5 +1,5 @@
 # Because of BOINC the version number must be n.m where m<100
-AC_INIT([scospub], [0.12], [ltolke@gmail.com])
+AC_INIT([scospub], [0.19], [ltolke@gmail.com])
 AM_INIT_AUTOMAKE([-Wall foreign])
 
 AC_ARG_WITH(boinc,

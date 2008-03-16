@@ -24,6 +24,7 @@ if (!$projid) {
     ";
 } else {
     $result = mysql_query('SELECT scos_project.id as id, '
+        . 'scos_project.name as projname, '
         . 'team.name as name, '
         . 'name_lc '
         . 'FROM scos_project, team '
@@ -33,10 +34,11 @@ if (!$projid) {
     while ($proj = mysql_fetch_object($result)) {
 	if ($xml) {
 	    echo "  <id>$proj->id</id>\n";
-	    echo "  <name>$proj->name_lc</name>\n";
+	    echo "  <projectname>$proj->projname</projectname>\n";
+	    echo "  <team>$proj->name_lc</team>\n";
 	    echo "  <results>\n";
 	} else {
-	    echo "  <b><a href='projects.php#$proj->name_lc'>$proj->name</a>:</b>\n";
+	    echo "  <b><a href='projects.php#$proj->projname-$proj->name_lc'>$proj->name</a>:</b>\n";
 	    start_table();
 	    echo "
 		<tr>

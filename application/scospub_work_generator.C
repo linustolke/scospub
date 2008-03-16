@@ -499,7 +499,9 @@ int make_job(const SCOS_PROJECT project,
 
     f << "<" JOB_TAG ">\n";
     f << "  <" TAG_PROJECT " id='" << project.id <<  "'>"
-      << team.name_lc << "</" TAG_PROJECT ">\n";
+      << project.name << "</" TAG_PROJECT ">\n";
+    f << "  <" TAG_TEAM " id='" << team.id << "'>"
+      << team.name_lc << "</" TAG_TEAM ">\n";
     f << "  <" TAG_TOOL " id='" << tool.id << "'>"
       << tool.name << "</" TAG_TOOL ">\n";
     f << "  <" TAG_CONFIG ">" << tool.config << "</" TAG_CONFIG ">\n";
@@ -517,8 +519,8 @@ int make_job(const SCOS_PROJECT project,
 	f << "    <" TAG_SVN " id='" << source.id << "'>\n";
 	f << "      <" TAG_URL ">" << source.url << "</" TAG_URL ">\n";
 
-	string checkoutdir = team.name_lc;
-	checkoutdir += (source.url + strlen(source.rooturl));
+	string checkoutdir = "";
+ 	checkoutdir += (source.url + strlen(source.rooturl));
 	f << "      <" TAG_CHECKOUTDIR ">" << checkoutdir << "</" TAG_CHECKOUTDIR ">\n";
 	f << "      <" TAG_USERNAME ">" << source.username << "</" TAG_USERNAME ">\n";
 	f << "      <" TAG_PASSWORD ">" << source.password << "</" TAG_PASSWORD ">\n";
@@ -618,9 +620,21 @@ void main_loop()
 
 	    team.lookup_id(project.team);
 
+	    string projlog = "";
+	    projlog += "project ";
+	    projlog += project.name;
+	    projlog += " (projid ";
+	    {
+		char buf[10];
+		sprintf(buf, "%d", project.id);
+		projlog += buf;
+	    }
+	    projlog += ") for team ";
+	    projlog += team.name;
+
 	    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-				"Processing project %s (projid %d)\n",
-				team.name, project.id
+				"Processing %s\n",
+				projlog.c_str()
 		    );
 
 	    check_stop_daemons();
@@ -638,16 +652,18 @@ void main_loop()
 		    "WHERE project = %d AND active = TRUE AND valid='valid'",
 		    project.id);
 
-	    // Two years maximum
-            int not_changed_in = 2 * 365 * 24 * 3600;
+#define NO_TIME_GOTTEN (10 * 365 * 24 * 3600)
+            int not_changed_in = NO_TIME_GOTTEN;
 
 	    while (!source.enumerate(clause))
 	    {
 		if (source.type != 1)
 		{
 		    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
-					"Cannot handle source of type %d.\n",
-					source.type);
+					"Cannot handle source of type %d "
+					"for %s.\n",
+					source.type,
+					projlog.c_str());
 		    errors++;
 		    continue;
 		}
@@ -658,10 +674,9 @@ void main_loop()
 		{
 		    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
 					"Cannot fetch SVN information for %s "
-					"(%s (projid %d)).\n",
+					"for %s.\n",
 					source.url,
-					team.name,
-					project.id);
+					projlog.c_str());
 		    errors++;
 		    continue;
 		}
@@ -669,9 +684,11 @@ void main_loop()
 		if (strcmp(source.rooturl, res.get_rooturl()))
 		{
 		    log_messages.printf(SCHED_MSG_LOG::MSG_NORMAL,
-					"Rooturl changed from %s to %s.\n",
+					"Rooturl changed from %s to %s "
+					"for %s.\n",
 					source.rooturl,
-					res.get_rooturl());
+					res.get_rooturl(),
+					projlog.c_str());
 		    strcpy(source.rooturl, res.get_rooturl());
 		    source.update();
 		}
@@ -679,9 +696,10 @@ void main_loop()
 		if (strcmp(source.uuid, res.get_uuid()))
 		{
 		    log_messages.printf(SCHED_MSG_LOG::MSG_NORMAL,
-					"UUID changed from %s to %s.\n",
+					"UUID changed from %s to %s for %s.\n",
 					source.uuid,
-					res.get_uuid());
+					res.get_uuid(),
+					projlog.c_str());
 		    strcpy(source.uuid, res.get_uuid());
 		    source.update();
 		}
@@ -696,9 +714,11 @@ void main_loop()
 		if (res.get_last_revision() <= source.lastrevision)
 		{
 		    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-					"Revision %d is not newer than %d.\n",
+					"Revision %d is not newer than %d "
+					"for %s.\n",
 					res.get_last_revision(),
-					source.lastrevision
+					source.lastrevision,
+					projlog.c_str()
 			);
 		    continue;
 		}
@@ -723,11 +743,10 @@ void main_loop()
 		    {
 			// Creat one job per tool.
 			log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-					    "Creating job for %s (%d) %s %s.\n",
-					    team.name,
-					    project.id,
+					    "Creating job %s %s for %s.\n",
 					    tool.name,
-					    tool.config
+					    tool.config,
+					    projlog.c_str()
 			    );
 			make_job(project, team, tool, svn_revisions);
 		    }
@@ -740,24 +759,28 @@ void main_loop()
 		}
 
 		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-				    "Processing project %s (projid %d) done\n",
-				    team.name,
-				    project.id
+				    "Processing %s done.\n",
+				    projlog.c_str()
 		    );
 	    }
 	    else
 	    {
 		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-				    "Processing project %s (projid %d) "
-				    "aborted. %d errors seen.\n",
-				    team.name,
-				    project.id,
+				    "Processing %s aborted. %d errors seen.\n",
+				    projlog.c_str(),
 				    errors
 		    );
 	    }
 
 	    // Start putting off after 24 hours
-	    if (not_changed_in > 24 * 3600) {
+	    if (not_changed_in == NO_TIME_GOTTEN)
+	    {
+		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
+				    "No source was configured for %s.\n",
+				    projlog.c_str());
+	    }
+	    else if (not_changed_in > 24 * 3600)
+	    {
 		// If it was a long time since this project was updated
 		// don't immediately poll it again.
 		// For every minute above the 24 hours, delay two extra
@@ -773,14 +796,13 @@ void main_loop()
 		}
 
 		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-				    "Delaying next processing of project "
-				    "%s (projid %d) "
-				    "for at least %02d:%02d:%02d.\n",
-				    team.name,
-				    project.id,
+				    "Delaying next processing "
+				    "for at least %02d:%02d:%02d "
+				    "for %s.\n",
 				    project.delay / 3600,
 				    (project.delay / 60) % 60,
-				    project.delay % 60
+				    project.delay % 60,
+				    projlog.c_str()
 		    );
 
 		project.update();
