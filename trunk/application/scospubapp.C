@@ -65,7 +65,7 @@ double checkpoint_cpu = 0.0;
 
 class JOB_INFO {
 public:
-    virtual const char * get_project_name() const = 0;
+    virtual string get_job_root() const = 0;
 };
 
 class TASK {
@@ -168,6 +168,8 @@ class job_type : JOB_INFO
 private:
     string project_name;
     int projectid;
+    string team_name;
+    int teamid;
     string tool;
     int toolid;
     string config;
@@ -178,8 +180,13 @@ private:
     vector<TASK*> tasks;
 
 public:
-    virtual const char * get_project_name() const {
-	return project_name.c_str();
+    virtual string get_job_root() const {
+	string res = "";
+	res += "/tmp/scospub/";
+	res += team_name;
+	res += "/";
+	res += project_name;
+	return res.c_str();
     };
 
     int parse();
@@ -244,8 +251,8 @@ int svn_source::run(JOB_INFO * info)
     command_line += " --no-auth-cache ";
     command_line += url;
 
-    command_line += " /tmp/scospub/";
-    command_line += info->get_project_name();
+    command_line += " ";
+    command_line += info->get_job_root();
     command_line += "/";
     command_line += checkoutdir;
 
@@ -500,6 +507,8 @@ int job_type::parse() {
         }
 	else if (xp.parse_string(tag, TAG_PROJECT, project_name, projectid))
 	    continue;
+	else if (xp.parse_string(tag, TAG_TEAM, team_name, teamid))
+	    continue;
 	else if (xp.parse_string(tag, TAG_TOOL, tool, toolid))
 	    continue;
 	else if (xp.parse_string(tag, TAG_CONFIG, config))
@@ -545,11 +554,17 @@ processTASK::get_processed_args(JOB_INFO * info)
     choke me!
 #else
     string command =
-	string("find /tmp/scospub/") + info->get_project_name()
+	string("find ")
+	+ info->get_job_root()
 	+ string(" -name ") + file_args_unprocessed
-	+ string(" -print");
+	+ string(" -print")
+	+ string(" </dev/null 2>/tmp/find-command-stderr$$.log")
+	+ string("; sleep 100");
 
+    fprintf(stderr, "Searching for files: %s\n", command.c_str());
     FILE * names = popen(command.c_str(), "r");
+
+    fprintf(stderr, "Popen complete!\n");
 
     if (names == NULL)
     {
@@ -559,16 +574,23 @@ processTASK::get_processed_args(JOB_INFO * info)
 	return res;
     }
 
+    fprintf(stderr, "names is non-null!\n");
+
 #define LONGEST_FILENAME 1024
     char buf[LONGEST_FILENAME];
     char * readfile;
 
     while ((readfile = fgets(buf, LONGEST_FILENAME, names)) != NULL)
     {
+	fprintf(stderr, "Found: %s\n", readfile);
 	res.insert(res.end(), string(readfile));
     }
 
+    fprintf(stderr, "pclose\n");
+
     pclose(names);
+
+    fprintf(stderr, "pclose complete!\n");
 #endif
 
     return res;

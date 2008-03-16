@@ -7,13 +7,15 @@ drop table scos_project;
 create table scos_project (
     id INTEGER NOT NULL AUTO_INCREMENT,
     UNIQUE KEY id (`id`),
-    team INTEGER;
-    FOREIGN KEY team (team) REFERENCES team (id) ON DELETE CASCADE,
+    team INTEGER,
+    # FOREIGN KEY team (team) REFERENCES team (id) ON DELETE CASCADE,
+    name VARCHAR(256),
+    CONSTRAINT name_within_team UNIQUE (team, name),
     nextpoll timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     active BOOL NOT NULL DEFAULT FALSE
 ) engine=innodb;
 INSERT INTO scos_project
-    SET id=1, name='Template', user_friendly_name='Dummy template project',
+    SET id=1, team = 0, name='Template',
     active=false;
 
 create table scos_source (

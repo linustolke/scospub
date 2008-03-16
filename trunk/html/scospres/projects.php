@@ -26,6 +26,7 @@ if ($xml) {
     ";
 }
 $result = mysql_query('SELECT scos_project.id as id, '
+    . 'scos_project.name as projname, '
     . 'team.name as name, '
     . 'name_lc, '
     . 'name_html '
@@ -44,11 +45,12 @@ while ($proj = mysql_fetch_object($result)) {
     if ($xml) {
         echo "  <scos_project>\n";
         echo "    <id>$proj->id</id>\n";
-        echo "    <name>$proj->name_lc</name>\n";
+        echo "    <projectname>$proj->projname</projectname>\n";
+        echo "    <team>$proj->name_lc</team>\n";
     } else {
         echo "
             <tr>
-              <td><a name='$proj->name_lc'>$friendly_name</a></td>
+              <td><a name='$proj->projname-$proj->name_lc'>$proj->projname ($friendly_name)</a></td>
         ";
 
 	$r2 = mysql_query("SELECT count(*) as num "

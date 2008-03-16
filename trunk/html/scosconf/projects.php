@@ -17,6 +17,7 @@ if ($xml) {
     ";
 }
 $result = mysql_query('SELECT scos_project.id as projid, name_lc, name_html, '
+    . 'scos_project.name as proj_name, '
     . 'active, team.name as name '
     . 'FROM scos_project, team '
     . 'WHERE scos_project.id > 1 '
@@ -30,7 +31,7 @@ if (mysql_numrows($result) > 0) {
 	echo "
 	    <tr>
 	      <th>".tr(SCOSC_PROJECTNAME)."</th>
-	      <th>".tr(SCOSP_THEPROJECT)."</th>
+	      <th>".tr(SCOSP_THETEAM)."</th>
 	      <th>".tr(SCOSC_SOURCES)."<br>
 	      ".tr(SCOSC_TOOLS)."</th>
 	    </tr>
@@ -55,7 +56,7 @@ if (mysql_numrows($result) > 0) {
 		  <TD VALIGN='TOP' ROWSPAN='2'>
                     <A NAME='proj$proj->projid' 
                        HREF='configproject.php?project=$proj->projid'>
-                      $proj->name
+                      $proj->proj_name
                     </A>
 	    ";
 	    if ($proj->active) {

@@ -23,7 +23,10 @@
 struct SCOS_PROJECT {
     int id;
     int team;
+    char name[256];
+    char nextpoll[35];
     int active;
+
     int delay;
 
     void clear();

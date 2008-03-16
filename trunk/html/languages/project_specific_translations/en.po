@@ -20,6 +20,9 @@ msgstr "Presentation of the results"
 msgid "SCOSP_DESCRIPTION"
 msgstr "$PROJECT provides information for the following open source development projects."
 
+msgid "SCOSP_THETEAM"
+msgstr "The team"
+
 msgid "SCOSP_THEPROJECT"
 msgstr "The project"
 
