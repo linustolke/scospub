@@ -48,6 +48,7 @@ AC_PROG_CXX
 [
 if [ $GXX = yes ]; then
   ln -sf `g++ -print-file-name=libstdc++.a` application
+  ln -sf `g++ -print-file-name=libstdc++.a` server
 fi
 ]
 
@@ -74,6 +75,7 @@ AC_CHECK_FUNCS([memset])
 
 AC_CONFIG_FILES(Makefile
 	        application/Makefile
+	        server/Makefile
                 tools/Makefile
 		wu/Makefile
                 html/Makefile
