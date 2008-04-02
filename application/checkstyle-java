@@ -1,4 +1,0 @@
-#!/bin/sh
-/usr/bin/java "$@"
-echo $? 1>&2
-exit 0
