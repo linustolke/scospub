@@ -27,7 +27,7 @@ svn co http://scospub.googlecode.com/svn/trunk scospub
 cd scospub
 _autosetup
 }}}
-  # Install the boinc server part.
+  # Install the boinc server part see http://boinc.berkeley.edu/trac/wiki/MakeProject
   # Configure the project:
 {{{
 ./configure -C --with-boinc=`pwd`/../boinc --with-project=/where/you/installed/the/boinc/server/project
