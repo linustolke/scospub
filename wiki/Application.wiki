@@ -12,16 +12,9 @@ The requirements are:
   * Simple, straight-forward.
   * Linked with the BOINC library and implementing the BOINC API.
 
-The first attempt was with running the wrapper application and just generating
-a job.xml file containing commands.
-This didn't work very well during the development of the other parts since a small error in the script made a command fail and then the wrapper restarted this command indefinately.
-If there is some problem for the client, downloading from the repository or running the tool, it would be better if the client fails completely.
-Another problem was that extra "tools" had to be distributed to start svn and java.
-
 Use a purposeful scospub application that knows the concept of repositories (subversion and whatever), starts the correct application and handles problems in a smart way. 
 There are some ReasonsForNotUsingTheWrapperApplication.
 It could also eventually be improved to do some basic security checks on the invoked programs.
-
 
 In order not to affect the normal boinc handling of files,
 the checked out files from the project's repository reside in a separate directory.
