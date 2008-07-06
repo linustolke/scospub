@@ -19,6 +19,7 @@ if (!$project || $project <= 0) {
 $id = $_REQUEST["id"];
 
 $url = $_REQUEST["url"];
+$reldir = $_REQUEST["reldir"];
 $username = $_REQUEST["username"];
 $password = $_REQUEST["password"];
 if ($_REQUEST["active"]) {
@@ -37,7 +38,7 @@ if ($url && $url != "") {
     }
 
     mysql_query("INSERT INTO scos_source "
-	. "SET project='$project', type=$type, "
+	. "SET project='$project', reldir='$reldir', type=$type, "
 	. "url='$url', username='$username', password='$password', "
 	. "valid='unknown', active=1");
     $result = mysql_query("SELECT LAST_INSERT_ID() AS id");
@@ -60,6 +61,7 @@ echo "<A HREF='projects.php'>Projects</A>
 ";
 
 $type = 0;
+$reldir = "";
 $url = "";
 $username = "";
 $password = "";
@@ -75,6 +77,7 @@ if ($id > 0) {
 
     if ($val = mysql_fetch_object($result)) {
 	$project = $val->project;
+        $reldir = $val->reldir;
 	$type = $val->type;
 	$url = $val->url;
 	$username = $val->username;
@@ -86,6 +89,10 @@ if ($id > 0) {
 	$active = $val->active;
     }
     mysql_free_result($result);
+}
+
+if ($reldir == "") {
+    $reldir = "dir";
 }
 
 echo "
@@ -103,6 +110,10 @@ echo "
     <TR>
       <TD>URL:</TD>
       <TD><INPUT type='text' name='url' value='$url' size='70'/></TD>
+    </TR>
+    <TR>
+      <TD>Directory:</TD>
+      <TD><INPUT type='text' name='reldir' value='$reldir' size='30'/></TD>
     </TR>
     <TR>
       <TD>Username:</TD>

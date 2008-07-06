@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <vector>
 #include <string>
+#include <sstream>
 #ifdef _WIN32
 #include "boinc_win.h"
 #else
@@ -538,60 +539,32 @@ int job_type::parse() {
 }
 
 
+// Convert file_args_unprocessed to a list of files or diretories
+// that the program shall work on.
+//
+// Processing rules implemented:
+// Split list!
+// %r -> repository root
+//
 vector<string>
 processTASK::get_processed_args(JOB_INFO * info)
 {
-    // Parse through the repository and find files matching
-    // file_args_unprocessed and build strings reflecting their path
     vector<string> res;
 
-    if (file_args_unprocessed == "")
+    string buf;
+    std::stringstream ss(file_args_unprocessed);
+
+    while (ss >> buf)
     {
-	return res;
+#define REPOSITORY_ROOT_TOKEN "%r"
+	string::size_type loc = buf.find(REPOSITORY_ROOT_TOKEN);
+	if (loc != string::npos)
+	{
+	    buf.erase(loc, strlen(REPOSITORY_ROOT_TOKEN));
+	    buf.insert(loc, info->get_job_root());
+	}
+	res.push_back(buf);
     }
-
-#ifdef _WIN32
-    choke me!
-#else
-    string command =
-	string("find ")
-	+ info->get_job_root()
-	+ string(" -name ") + file_args_unprocessed
-	+ string(" -print")
-	+ string(" </dev/null 2>/tmp/find-command-stderr$$.log")
-	+ string("; sleep 100");
-
-    fprintf(stderr, "Searching for files: %s\n", command.c_str());
-    FILE * names = popen(command.c_str(), "r");
-
-    fprintf(stderr, "Popen complete!\n");
-
-    if (names == NULL)
-    {
-	// Some error occured.
-	fprintf(stderr, "Could not run find, error is %s.\n",
-		strerror(errno));
-	return res;
-    }
-
-    fprintf(stderr, "names is non-null!\n");
-
-#define LONGEST_FILENAME 1024
-    char buf[LONGEST_FILENAME];
-    char * readfile;
-
-    while ((readfile = fgets(buf, LONGEST_FILENAME, names)) != NULL)
-    {
-	fprintf(stderr, "Found: %s\n", readfile);
-	res.insert(res.end(), string(readfile));
-    }
-
-    fprintf(stderr, "pclose\n");
-
-    pclose(names);
-
-    fprintf(stderr, "pclose complete!\n");
-#endif
 
     return res;
 }
@@ -708,6 +681,14 @@ int processTASK::run(JOB_INFO * info)
     char * buf = create_malloced_string(app_path.c_str());
     fprintf(stderr,
 	    "scospubapp: running %s %s\n", buf, command_line.c_str());
+
+    for (vector<string>::iterator iter = processed_args.begin();
+	 iter != processed_args.end();
+	 iter++)
+    {
+	fprintf(stderr, "scospubapp: with argument: %s\n", (*iter).c_str());
+    }
+
     fflush(stderr);
 
     // construct argv

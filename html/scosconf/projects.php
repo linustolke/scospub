@@ -84,18 +84,22 @@ if (mysql_numrows($result) > 0) {
 		    // TODO: Change colors to notify invalid and unknown.
 		    echo "<LI>";
 
-		    if ($av->type == 1) {
-			echo "<A HREF='configsource.php?project=$proj->projid&id=$av->id'>";
-			echo tr(SCOSC_SVN_SOURCE_URL);
-			echo " $av->url</A> ($av->valid) ";
-		    } else {
-			echo "".tr(SCOSC_UNKNOWN_TYPE)." ";
-		    }
+		    echo tr(SCOSC_SVN_SOURCE_URL);
+		    echo " $av->reldir ";
 
 		    if ($av->active) {
 			echo tr(SCOSC_ACTIVE);
 		    } else {
 			echo tr(SCOSC_NOT_ACTIVE);
+		    }
+
+		    echo "<BR>";
+
+		    if ($av->type == 1) {
+			echo "<A HREF='configsource.php?project=$proj->projid&id=$av->id'>";
+			echo " $av->url</A> ($av->valid) ";
+		    } else {
+			echo "".tr(SCOSC_UNKNOWN_TYPE)." ";
 		    }
 
 		    echo "</LI>";

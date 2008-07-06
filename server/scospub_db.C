@@ -84,6 +84,7 @@ void DB_SCOS_PROJECT::db_parse(MYSQL_ROW& r)
 // db_print method for the scos_source table
 void DB_SCOS_SOURCE::db_print(char * buf)
 {
+    char reldir2[2 * sizeof reldir];
     char url2[2 * sizeof url];
     char username2[2 * sizeof username];
     char password2[2 * sizeof password];
@@ -91,6 +92,7 @@ void DB_SCOS_SOURCE::db_print(char * buf)
     char uuid2[2 * sizeof uuid];
     char valid2[2 * sizeof valid];
 
+    safe_strcpy(reldir2, reldir);
     safe_strcpy(url2, url);
     safe_strcpy(username2, username);
     safe_strcpy(password2, password);
@@ -98,6 +100,7 @@ void DB_SCOS_SOURCE::db_print(char * buf)
     safe_strcpy(uuid2, uuid);
     safe_strcpy(valid2, valid);
 
+    ESCAPE(reldir2);
     ESCAPE(url2);
     ESCAPE(username2);
     ESCAPE(password2);
@@ -107,6 +110,7 @@ void DB_SCOS_SOURCE::db_print(char * buf)
 
     sprintf(buf,
 	    "project=%d, "
+	    "reldir='%s', "
 	    "type=%d, "
 	    "url='%s', "
 	    "username='%s', "
@@ -118,6 +122,7 @@ void DB_SCOS_SOURCE::db_print(char * buf)
 	    "active=%d",
 
 	    project,
+	    reldir,
 	    type,
 	    url2,
 	    username2,
@@ -137,6 +142,7 @@ void DB_SCOS_SOURCE::db_parse(MYSQL_ROW& r)
     clear();
     id = atoi(r[i++]);
     project = atoi(r[i++]);
+    strcpy2(reldir, r[i++]);
     type = atoi(r[i++]);
     strcpy2(url, r[i++]);
     strcpy2(username, r[i++]);
