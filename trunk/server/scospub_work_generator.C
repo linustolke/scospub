@@ -77,7 +77,6 @@ using std::list;
 //
 DB_APP app;
 int start_time;
-SCHED_CONFIG config;
 
 typedef std::map<const int, int> revisions_map_type;
 
