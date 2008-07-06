@@ -19,7 +19,7 @@ If there is some problem for the client, downloading from the repository or runn
 Another problem was that extra "tools" had to be distributed to start svn and java.
 
 Use a purposeful scospub application that knows the concept of repositories (subversion and whatever), starts the correct application and handles problems in a smart way. 
-There are [[Reasons for not using the wrapper directly]].
+There are some ReasonsForNotUsingTheWrapperApplication.
 It could also eventually be improved to do some basic security checks on the invoked programs.
 
 
