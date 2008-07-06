@@ -35,6 +35,7 @@ struct SCOS_PROJECT {
 struct SCOS_SOURCE {
     int id;
     int project;
+    char reldir[100];
     int type;
 
     // Static data

@@ -85,7 +85,8 @@ typedef std::map<const int, int> revisions_map_type;
 class tooldetails {
 public:
     virtual void write_command_line(std::ofstream& f) const = 0;
-    virtual void write_file_args(std::ofstream& f) const = 0;
+    virtual void
+    write_file_args(std::ofstream& f, vector<string> reldirs) const = 0;
 
     virtual const list<string>* get_infiles() const = 0;
 
@@ -173,7 +174,8 @@ public:
 	return "templates/scospub2_result";
     }
 
-    virtual void write_file_args(std::ofstream& f) const
+    virtual void
+    write_file_args(std::ofstream& f, vector<string> reldirs) const
     {
     }
 };
@@ -196,6 +198,21 @@ public:
 	f << "-cp checkstyle-all-4.3.jar";
 	f << " com.puppycrawl.tools.checkstyle.Main";
 	f << " -c checkstyle-sun_checks.xml";
+    }
+
+    virtual void
+    write_file_args(std::ofstream& f, vector<string> reldirs) const
+    {
+	for (vector<string>::iterator i = reldirs.begin();
+	     i != reldirs.end();
+	     i++)
+	{
+	    if (i != reldirs.begin())
+	    {
+		f << " ";
+	    }
+	    f << "-r %r/" << *i;
+	}
     }
 } td_cssc;
 
@@ -223,7 +240,7 @@ public:
 	f << " -jar " << jar << " ";
     }
 
-    virtual void write_file_args(std::ofstream& f) const
+    virtual void write_file_args(std::ofstream& f, vector<string> reldirs) const
     {
 	f << "*.jar";
     }
@@ -512,15 +529,18 @@ int make_job(const SCOS_PROJECT project,
 	    "WHERE project = %d AND active=true AND valid='valid'",
 	    project.id);
 
+    vector<string> reldirs;
+
     // Mapping a project to url
     f << "  <" TAG_SOURCE ">\n";
-    while (!source.enumerate(clause)) {
+    while (!source.enumerate(clause))
+    {
+	reldirs.push_back(source.reldir);
+
 	f << "    <" TAG_SVN " id='" << source.id << "'>\n";
 	f << "      <" TAG_URL ">" << source.url << "</" TAG_URL ">\n";
 
-	string checkoutdir = "";
- 	checkoutdir += (source.url + strlen(source.rooturl));
-	f << "      <" TAG_CHECKOUTDIR ">" << checkoutdir << "</" TAG_CHECKOUTDIR ">\n";
+	f << "      <" TAG_CHECKOUTDIR ">" << source.reldir << "</" TAG_CHECKOUTDIR ">\n";
 	f << "      <" TAG_USERNAME ">" << source.username << "</" TAG_USERNAME ">\n";
 	f << "      <" TAG_PASSWORD ">" << source.password << "</" TAG_PASSWORD ">\n";
 	f << "      <" TAG_REVISION ">" << svn_revisions[source.id] << "</" TAG_REVISION ">\n";
@@ -547,7 +567,7 @@ int make_job(const SCOS_PROJECT project,
 
     f << "    <" TAG_ARGS ">";
 
-    tooldp->write_file_args(f);
+    tooldp->write_file_args(f, reldirs);
 
     f << "</" TAG_ARGS ">\n";
 
@@ -787,8 +807,8 @@ void main_loop()
 		// 25 hours will cause a poll delay of two minutes.
 		project.delay = (not_changed_in - 24 * 3600) / 30;
 
-		// We never delay more than 40 hours
-#define MAX_DELAY (40 * 3600)
+		// We never delay more than 1 hour
+#define MAX_DELAY (3600)
 		if (project.delay > MAX_DELAY)
 		{
 		    project.delay = MAX_DELAY;
@@ -803,23 +823,18 @@ void main_loop()
 				    project.delay % 60,
 				    projlog.c_str()
 		    );
-
-		project.update();
 	    }
+	    else
+	    {
+#define MIN_DELAY (60)
+		// Wait a while between every polling.
+		// TODO: Tune this.
+		project.delay = MIN_DELAY;
+	    }
+
+	    project.update();
 	}
 
-	// Wait a while between every polling.
-	// TODO: Tune this.
-	process_svn_urls();
-	sleep(10);
-	process_svn_urls();
-	sleep(10);
-	process_svn_urls();
-	sleep(10);
-	process_svn_urls();
-	sleep(10);
-	process_svn_urls();
-	sleep(10);
 	process_svn_urls();
 	sleep(10);
     }

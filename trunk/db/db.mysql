@@ -23,7 +23,10 @@ create table scos_source (
     UNIQUE KEY id (`id`),
     project INTEGER NOT NULL,
     FOREIGN KEY project (project) REFERENCES scos_project (id) ON DELETE CASCADE,
-    type INTEGER NOT NULL, # 1 = Subversion, 2 = CVS, other...
+    reldir VARCHAR(100),
+    type INTEGER NOT NULL, # 1 = Subversion,
+			   # 2 = CVS (not implemented),
+                           # other...
 
     # Subversion
 	# Static data
