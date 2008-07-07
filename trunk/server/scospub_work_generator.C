@@ -816,7 +816,7 @@ void main_loop()
 
 		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
 				    "Delaying next processing "
-				    "for at least %02d:%02d:%02d "
+				    "for %02d:%02d:%02d "
 				    "for %s.\n",
 				    project.delay / 3600,
 				    (project.delay / 60) % 60,
