@@ -36,6 +36,7 @@ int assimilate_handler(
 	    log.printf("Not right count of files: %d != %d\n",
 		       output_file_paths.size(),
 		       COUNT_OUTPUT_FILES);
+	    // Lets ignore the result.
 	    return 1;
 	}
 
@@ -83,7 +84,14 @@ int assimilate_handler(
 	// Lets initially assume that the files are always in the
 	// right order.
 
-	// The first file is not currently interesting.
+	// The first file (output_file_paths[0]) is the stdout with detailed
+	// data on the result of the application. This is made available
+	// on the web site.
+
+	// The second file (output_file_paths[1]) is the file with the
+	// summary of the result.
+
+	// The stderr is not communicated on this level.
 
 #define SCOSDATA "../html/scospres/DATA"
 	// out1:
@@ -109,14 +117,28 @@ int assimilate_handler(
 	    return retval;
 	}
 
-	// out2:
-	std::ifstream f3(output_file_paths[1].c_str());
+	// Read the stdin file to find the result, it is a line looking like
+	// SCOSPUB_RESULT: 1234
 
-	int result;
-	f3 >> result;
+#define NO_RESULT_FOUND (-1)
+	int result = NO_RESULT_FOUND;
 
-	f3.close();
+	std::ifstream f1(output_file_paths[1].c_str());
 
+	if (f1)
+	{
+	    string line;
+	    while (getline(f1, line, '\n')) 
+	    {
+#define RESULT_STRING "SCOSPUB_RESULT: "
+		if (line.find(RESULT_STRING, 0) == 0) {
+		    result = atoi(line.substr(strlen(RESULT_STRING)).c_str());
+		    break;
+		}
+	    }
+
+	    f1.close();
+	}
 
 	DB_SCOS_RESULT res;
 	res.create_time = canonical_result.received_time;
