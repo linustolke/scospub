@@ -553,9 +553,6 @@ int make_job(const SCOS_PROJECT project,
     f << "    <" TAG_STDOUT_FILENAME ">";
     f << "out1";
     f << "</" TAG_STDOUT_FILENAME ">\n";
-    f << "    <" TAG_STDERR_FILENAME ">";
-    f << "out2";
-    f << "</" TAG_STDERR_FILENAME ">\n";
 
     f << "    <" TAG_COMMAND_LINE ">";
 
@@ -573,6 +570,23 @@ int make_job(const SCOS_PROJECT project,
 
     f << "    <" TAG_IGNORE_EXIT ">1</" TAG_IGNORE_EXIT ">\n";
     f << "  </" TAG_TASK_JAVA ">\n";
+
+    // Task to parameterize the result
+    // Read the output file sofar and calculate the lines!
+    f << "  <" TAG_TASK ">\n";
+    f << "    <" TAG_APPLICATION ">/bin/sh</" TAG_APPLICATION ">\n";
+    f << "    <" TAG_COMMAND_LINE ">"
+	"-c 'echo SCOSPUB_RESULT: `wc -l`'"
+	"</" TAG_COMMAND_LINE ">\n";
+    f << "    <" TAG_STDIN_FILENAME ">";
+    f << "out1";
+    f << "</" TAG_STDIN_FILENAME ">\n";
+    f << "    <" TAG_STDOUT_FILENAME ">";
+    f << "out2";
+    f << "</" TAG_STDOUT_FILENAME ">\n";
+
+    f << "  </" TAG_TASK ">\n";
+
     f << "</" JOB_TAG ">\n";
 
     f.close();

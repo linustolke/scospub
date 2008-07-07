@@ -38,12 +38,12 @@ if (!$projid) {
 	    echo "  <team>$proj->name_lc</team>\n";
 	    echo "  <results>\n";
 	} else {
-	    echo "  <b><a href='projects.php#$proj->projname-$proj->name_lc'>$proj->name</a>:</b>\n";
+	    echo "  <b><a href='projects.php#$proj->projname-$proj->name_lc'>$proj->projname ($proj->name)</a>:</b>\n";
 	    start_table();
 	    echo "
 		<tr>
-		  <th>".tr(SCOSP_TOOL)."</th>
 		  <th>".tr(SCOSP_SOURCE)."</th>
+		  <th>".tr(SCOSP_TOOL)."</th>
 		  <th>".tr(SCOSP_DATE)."</th>
 		  <th>".tr(SCOSP_RESULT)."</th>
 		</tr>
@@ -70,23 +70,22 @@ if (!$projid) {
             } else {
 		echo "
 		     <tr>
-		       <td>
-			 $res->name
-		       </td>
 		       <td>";
 
 		// TODO: Hardcoded for SVN
 		$r3 = mysql_query('SELECT '
-			. 'rooturl, revision '
+			. 'url, revision '
 			. 'FROM scos_source, scos_result_source '
 			. 'WHERE scos_source.id = scos_result_source.source '
-			. "AND scos_result_source.result = $res->id "
-			. "GROUP BY rooturl");
+			. "AND scos_result_source.result = $res->id ");
                 while ($res3 = mysql_fetch_object($r3)) {
-			echo "$res3->rooturl $res3->revision <br>";
+			echo "$res3->url $res3->revision <br>";
 		}
 		echo "
 	               </td>
+		       <td>
+			 $res->name
+		       </td>
 		       <td>
 			 $res->date
 		       </td>
