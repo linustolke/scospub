@@ -21,8 +21,7 @@
 
 #include "parse.h"
 
-class sx_parser : public XML_PARSER
-{
+class SX_PARSER : public XML_PARSER {
 private:
     bool parse_str(const char* parsed_tag, const char* start_tag,
 		   int& id,
@@ -32,7 +31,7 @@ private:
 			  bool& is_end_tag, char * buf);
 
 public:
-    sx_parser(MIOFILE*);
+    SX_PARSER(MIOFILE*);
 
     bool parse_string(const char *, const char *, std::string&, int& id);
     bool parse_string(const char * tag, const char * st, std::string& str);

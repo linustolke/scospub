@@ -82,7 +82,7 @@ typedef std::map<const int, int> revisions_map_type;
 
 
 // Interface to keep tool info together.
-class tooldetails {
+class TOOLDETAILS {
 public:
     virtual void write_command_line(std::ofstream& f) const = 0;
     virtual void
@@ -99,16 +99,15 @@ public:
 
     // Static members and methods to maintain the register of the tools:
 private:
-    static std::map<string, tooldetails*> arch;
+    static std::map<string, TOOLDETAILS*> arch;
     static string calculate_index(const SCOS_TOOL * toolp);
 public:
-    static void put(const SCOS_TOOL *, tooldetails *);
-    static tooldetails* lookup(const SCOS_TOOL *);
+    static void put(const SCOS_TOOL *, TOOLDETAILS *);
+    static TOOLDETAILS* lookup(const SCOS_TOOL *);
 };
-std::map<string, tooldetails*> tooldetails::arch;
+std::map<string, TOOLDETAILS*> TOOLDETAILS::arch;
 
-string tooldetails::calculate_index(const SCOS_TOOL * toolp)
-{
+string TOOLDETAILS::calculate_index(const SCOS_TOOL * toolp) {
     string id = "";
     id += toolp->name;
     id += "/";
@@ -117,98 +116,81 @@ string tooldetails::calculate_index(const SCOS_TOOL * toolp)
     return id;
 }
 
-void tooldetails::put(const SCOS_TOOL * toolp, tooldetails * tdetails)
-{
+void TOOLDETAILS::put(const SCOS_TOOL * toolp, TOOLDETAILS * tdetails) {
     arch[calculate_index(toolp)] = tdetails;
 }
 
-tooldetails* tooldetails::lookup(const SCOS_TOOL * toolp)
-{
+TOOLDETAILS* TOOLDETAILS::lookup(const SCOS_TOOL * toolp) {
     return arch[calculate_index(toolp)];
 }
 
 
 // Abstract base class
-class abstract_tooldetails : tooldetails
-{
+class ABSTRACT_TOOLDETAILS : TOOLDETAILS {
 private:
     list<string> infiles;
     char * wu_template;
 
 protected:
-    void add_file(string str)
-    {
+    void add_file(string str) {
 	infiles.push_back(str);
     }
 
-    void put(const char * toolname, const char * config)
-    {
+    void put(const char * toolname, const char * config) {
 	SCOS_TOOL tool;
 	strcpy(tool.name, toolname);
 	strcpy(tool.config, config);
-	tooldetails::put(&tool, this);
+	TOOLDETAILS::put(&tool, this);
     }
 
 public:
-    abstract_tooldetails(const char * wu_path)
-    {
-	if (read_file_malloc(wu_path, wu_template))
-	{
+    ABSTRACT_TOOLDETAILS(const char * wu_path) {
+	if (read_file_malloc(wu_path, wu_template)) {
 	    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL, "can't read WU template for checkstyle\n");
 	    exit(1);
 	}
     }
 
-    virtual const list<string>* get_infiles() const
-    {
+    virtual const list<string>* get_infiles() const {
 	return &infiles;
     }
 
-    virtual const char * get_wu_template()
-    {
+    virtual const char * get_wu_template() {
 	return wu_template;
     }
 
-    virtual const char * get_result_template_filename()
-    {
+    virtual const char * get_result_template_filename() {
 	return "templates/scospub2_result";
     }
 
     virtual void
-    write_file_args(std::ofstream& f, vector<string> reldirs) const
-    {
+    write_file_args(std::ofstream& f, vector<string> reldirs) const {
     }
 };
 
 // Checkstyle
-class toold_checkstyle_sunchecks : abstract_tooldetails
-{
+class TOOLD_CHECKSTYLE_SUNCHECKS : ABSTRACT_TOOLDETAILS {
 public:
-    toold_checkstyle_sunchecks()
-	: abstract_tooldetails("../templates/checkstyle_wu")
-    {
+    TOOLD_CHECKSTYLE_SUNCHECKS()
+	: ABSTRACT_TOOLDETAILS("../templates/checkstyle_wu") {
 	add_file("checkstyle-all-4.3.jar");
 	add_file("checkstyle-sun_checks.xml");
 
 	put("checkstyle", "sunchecks");
     }
 
-    virtual void write_command_line(std::ofstream& f) const
-    {
+    virtual void write_command_line(std::ofstream& f) const {
 	f << "-cp checkstyle-all-4.3.jar";
 	f << " com.puppycrawl.tools.checkstyle.Main";
 	f << " -c checkstyle-sun_checks.xml";
     }
 
     virtual void
-    write_file_args(std::ofstream& f, vector<string> reldirs) const
-    {
+    write_file_args(std::ofstream& f, vector<string> reldirs) const {
 	for (vector<string>::iterator i = reldirs.begin();
 	     i != reldirs.end();
-	     i++)
-	{
-	    if (i != reldirs.begin())
-	    {
+	     i++) {
+	    if (i != reldirs.begin()) {
 		f << " ";
 	    }
 	    f << "-r %r/" << *i;
@@ -216,52 +198,44 @@ public:
     }
 } td_cssc;
 
-class toold_findbugs : abstract_tooldetails
-{
+class TOOLD_FINDBUGS : ABSTRACT_TOOLDETAILS {
 private:
     const char * jar;
 
 protected:
-    void add_jar(const char * file)
-    {
+    void add_jar(const char * file) {
 	jar = file;
 	add_file(jar);
     }
 
 public:
-    toold_findbugs(const char * version)
-	: abstract_tooldetails("../templates/findbugs_wu")
-    {
+    TOOLD_FINDBUGS(const char * version)
+	: ABSTRACT_TOOLDETAILS("../templates/findbugs_wu") {
 	put("findbugs", version);
     }
 
-    virtual void write_command_line(std::ofstream& f) const
-    {
+    virtual void write_command_line(std::ofstream& f) const {
 	f << " -jar " << jar << " ";
     }
 
-    virtual void write_file_args(std::ofstream& f, vector<string> reldirs) const
-    {
+    virtual void
+    write_file_args(std::ofstream& f, vector<string> reldirs) const {
 	f << "*.jar";
     }
 };
 
-class toold_findbugs074 : toold_findbugs
-{
+class TOOLD_FINDBUGS074 : TOOLD_FINDBUGS {
 public:
-    toold_findbugs074()
-	: toold_findbugs("0.7.4")
-    {
+    TOOLD_FINDBUGS074()
+	: TOOLD_FINDBUGS("0.7.4") {
 	add_jar("findbugs-0.7.4.jar");
     }
 } td_fb074;
 
-class toold_findbugs131 : toold_findbugs
-{
+class TOOLD_FINDBUGS131 : TOOLD_FINDBUGS {
 public:
-    toold_findbugs131()
-	: toold_findbugs("1.3.1")
-    {
+    TOOLD_FINDBUGS131()
+	: TOOLD_FINDBUGS("1.3.1") {
 	add_jar("findbugs-1.3.1.jar");
     }
 } td_fb131;
@@ -271,10 +245,9 @@ public:
 //
 // Class to fetch info from a subversion repository.
 //
-class svn_result
-{
+class SVN_RESULT {
 public:
-    svn_result(const char * url, const char * username, const char * password);
+    SVN_RESULT(const char * url, const char * username, const char * password);
 
     bool get_successful() const { return successful; };
 
@@ -291,9 +264,8 @@ private:
     int not_changed_in;
 };
 
-svn_result::svn_result(const char * url,
-		       const char * username, const char * password)
-{
+SVN_RESULT::SVN_RESULT(const char * url,
+		       const char * username, const char * password) {
     successful = false;
     last_revision = -1;
 
@@ -325,8 +297,7 @@ svn_result::svn_result(const char * url,
 
     int result = system(commandline.c_str());
 
-    if (result != 0)
-    {
+    if (result != 0) {
 	log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
 			    "Cannot fetch data from %s. "
 			    "Error %d\n",
@@ -348,30 +319,26 @@ svn_result::svn_result(const char * url,
     std::ifstream file(filename, std::ios::in);
     // TODO: Error check
 
-    while (getline(file, line))
-    {
+    while (getline(file, line)) {
 #define SVN_LCR "Last Changed Rev: "
-	if (line.compare(0, strlen(SVN_LCR), SVN_LCR) == 0)
-	{
+	if (line.compare(0, strlen(SVN_LCR), SVN_LCR) == 0) {
 	    string sub(line.substr(strlen(SVN_LCR)));
 	    last_revision = atoi(sub.c_str());
 	}
 
 #define SVN_ROOTURL "Repository Root: "
-	if (line.compare(0, strlen(SVN_ROOTURL), SVN_ROOTURL) == 0)
-	{
+	if (line.compare(0, strlen(SVN_ROOTURL), SVN_ROOTURL) == 0) {
 	    rooturl = line.substr(strlen(SVN_ROOTURL));
 	}
 
 #define SVN_UUID "Repository UUID: "
-	if (line.compare(0, strlen(SVN_UUID), SVN_UUID) == 0)
-	{
+	if (line.compare(0, strlen(SVN_UUID), SVN_UUID) == 0) {
 	    uuid = line.substr(strlen(SVN_UUID));
 	}
 
 #define SVN_LAST_CHANGED "Last Changed Date: "
-	if (line.compare(0, strlen(SVN_LAST_CHANGED), SVN_LAST_CHANGED) == 0)
-	{
+	if (line.compare(0, strlen(SVN_LAST_CHANGED), SVN_LAST_CHANGED)
+	    == 0) {
 	    struct tm when;
 	    time_t not_changed_since = time(NULL);
 
@@ -395,19 +362,15 @@ svn_result::svn_result(const char * url,
 	    // a conservative guess.
 	    // This means that it doesn't begin backing off until
 	    // up to 24 hours after the last commit.
-	    if (not_changed_since > 0)
-	    {
+	    if (not_changed_since > 0) {
 		not_changed_in = time(NULL) - not_changed_since - 24 * 3600;
-	    }
-	    else
-	    {
+	    } else {
 		// Information was not received correctly. We don't know
 		// anything.
 		not_changed_in = 0;
 	    }
 
-	    if (not_changed_in < 0)
-	    {
+	    if (not_changed_in < 0) {
 		not_changed_in = 0;
 	    }
 	}
@@ -415,8 +378,7 @@ svn_result::svn_result(const char * url,
     file.close();
     unlink(filename);
 
-    if (last_revision > 0)
-    {
+    if (last_revision > 0) {
 	successful = true;
     }
 }
@@ -427,13 +389,11 @@ svn_result::svn_result(const char * url,
 //
 // Process new SVN URLs
 void
-process_svn_urls()
-{
+process_svn_urls() {
     static time_t last = time(NULL);
 
     // Don't do this more often than every three seconds.
-    if (last + 3 > time(NULL))
-    {
+    if (last + 3 > time(NULL)) {
 	return;
     }
 
@@ -441,16 +401,12 @@ process_svn_urls()
 
     DB_SCOS_SOURCE source;
 
-    while (!source.enumerate("WHERE valid='unknown'"))
-    {
-	svn_result res(source.url, source.username, source.password);
+    while (!source.enumerate("WHERE valid='unknown'")) {
+	SVN_RESULT res(source.url, source.username, source.password);
 
-	if (!res.get_successful())
-	{
+	if (!res.get_successful()) {
 	    strcpy(source.valid, "invalid");
-	}
-	else
-	{
+	} else {
 	    strcpy(source.rooturl, res.get_rooturl());
 	    strcpy(source.uuid, res.get_uuid());
 
@@ -472,8 +428,7 @@ process_svn_urls()
 int make_job(const SCOS_PROJECT project,
 	     const TEAM team,
 	     const SCOS_TOOL tool,
-	     revisions_map_type svn_revisions)
-{
+	     revisions_map_type svn_revisions) {
     // Files to create:
     // job.xml different for each job
     // input files (any?)
@@ -495,8 +450,7 @@ int make_job(const SCOS_PROJECT project,
 
     for (revisions_map_type::iterator it = svn_revisions.begin();
 	 it != svn_revisions.end();
-	 it++)
-    {
+	 it++) {
 	sprintf(name, "%s_s%dr%d", name, (*it).first, (*it).second);
     }
 
@@ -508,8 +462,7 @@ int make_job(const SCOS_PROJECT project,
     if (retval) return retval;
 
     std::ofstream f(path);
-    if (!f.is_open())
-    {
+    if (!f.is_open()) {
         return ERR_FOPEN;
     }
 
@@ -533,8 +486,7 @@ int make_job(const SCOS_PROJECT project,
 
     // Mapping a project to url
     f << "  <" TAG_SOURCE ">\n";
-    while (!source.enumerate(clause))
-    {
+    while (!source.enumerate(clause)) {
 	reldirs.push_back(source.reldir);
 
 	f << "    <" TAG_SVN " id='" << source.id << "'>\n";
@@ -556,7 +508,7 @@ int make_job(const SCOS_PROJECT project,
 
     f << "    <" TAG_COMMAND_LINE ">";
 
-    tooldetails * tooldp = tooldetails::lookup(&tool);
+    TOOLDETAILS * tooldp = TOOLDETAILS::lookup(&tool);
 
     tooldp->write_command_line(f);
 
@@ -615,8 +567,7 @@ int make_job(const SCOS_PROJECT project,
     list<string>::const_iterator it = tooldp->get_infiles()->begin();
     for (int i = 1;
 	 it != tooldp->get_infiles()->end();
-	 it++, i++)
-    {
+	 it++, i++) {
 	infiles[i] = it->c_str();
     }
 
@@ -637,16 +588,15 @@ int make_job(const SCOS_PROJECT project,
 }
 
 
-void main_loop()
-{
+void main_loop() {
     int retval;
 
-    while (1) // perpetually
-    {
+    // perpetually
+    while (1) {
 	DB_SCOS_PROJECT project;
 
-	while (!project.enumerate("WHERE active = TRUE AND NOW() > nextpoll"))
-	{
+	while (!project.enumerate(
+		   "WHERE active = TRUE AND NOW() > nextpoll")) {
 	    process_svn_urls();
 
 	    DB_TEAM team;
@@ -688,10 +638,8 @@ void main_loop()
 #define NO_TIME_GOTTEN (10 * 365 * 24 * 3600)
             int not_changed_in = NO_TIME_GOTTEN;
 
-	    while (!source.enumerate(clause))
-	    {
-		if (source.type != 1)
-		{
+	    while (!source.enumerate(clause)) {
+		if (source.type != 1) {
 		    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
 					"Cannot handle source of type %d "
 					"for %s.\n",
@@ -701,10 +649,9 @@ void main_loop()
 		    continue;
 		}
 
-		svn_result res(source.url, source.username, source.password);
+		SVN_RESULT res(source.url, source.username, source.password);
 
-		if (!res.get_successful())
-		{
+		if (!res.get_successful()) {
 		    log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
 					"Cannot fetch SVN information for %s "
 					"for %s.\n",
@@ -714,8 +661,7 @@ void main_loop()
 		    continue;
 		}
 
-		if (strcmp(source.rooturl, res.get_rooturl()))
-		{
+		if (strcmp(source.rooturl, res.get_rooturl())) {
 		    log_messages.printf(SCHED_MSG_LOG::MSG_NORMAL,
 					"Rooturl changed from %s to %s "
 					"for %s.\n",
@@ -726,8 +672,7 @@ void main_loop()
 		    source.update();
 		}
 
-		if (strcmp(source.uuid, res.get_uuid()))
-		{
+		if (strcmp(source.uuid, res.get_uuid())) {
 		    log_messages.printf(SCHED_MSG_LOG::MSG_NORMAL,
 					"UUID changed from %s to %s for %s.\n",
 					source.uuid,
@@ -737,15 +682,13 @@ void main_loop()
 		    source.update();
 		}
 
-		if (res.get_not_changed_in() < not_changed_in)
-		{
+		if (res.get_not_changed_in() < not_changed_in) {
 		    not_changed_in = res.get_not_changed_in();
 		}
 
 		svn_revisions[source.id] = res.get_last_revision();
 
-		if (res.get_last_revision() <= source.lastrevision)
-		{
+		if (res.get_last_revision() <= source.lastrevision) {
 		    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
 					"Revision %d is not newer than %d "
 					"for %s.\n",
@@ -759,10 +702,8 @@ void main_loop()
 	    }
 	    source.end_enumerate();
 
-	    if (errors == 0)
-	    {
-		if (changes > 0)
-		{
+	    if (errors == 0) {
+		if (changes > 0) {
 		    // There are indeed changes to some of the sources.
 
 		    DB_SCOS_TOOL tool;
@@ -772,8 +713,7 @@ void main_loop()
 			    "WHERE project = %d AND active = TRUE",
 			    project.id);
 
-		    while (!tool.enumerate(toolclause))
-		    {
+		    while (!tool.enumerate(toolclause)) {
 			// Creat one job per tool.
 			log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
 					    "Creating job %s %s for %s.\n",
@@ -795,9 +735,7 @@ void main_loop()
 				    "Processing %s done.\n",
 				    projlog.c_str()
 		    );
-	    }
-	    else
-	    {
+	    } else {
 		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
 				    "Processing %s aborted. %d errors seen.\n",
 				    projlog.c_str(),
@@ -806,14 +744,11 @@ void main_loop()
 	    }
 
 	    // Start putting off after 24 hours
-	    if (not_changed_in == NO_TIME_GOTTEN)
-	    {
+	    if (not_changed_in == NO_TIME_GOTTEN) {
 		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
 				    "No source was configured for %s.\n",
 				    projlog.c_str());
-	    }
-	    else if (not_changed_in > 24 * 3600)
-	    {
+	    } else if (not_changed_in > 24 * 3600) {
 		// If it was a long time since this project was updated
 		// don't immediately poll it again.
 		// For every minute above the 24 hours, delay two extra
@@ -823,8 +758,7 @@ void main_loop()
 
 		// We never delay more than 1 hour
 #define MAX_DELAY (3600)
-		if (project.delay > MAX_DELAY)
-		{
+		if (project.delay > MAX_DELAY) {
 		    project.delay = MAX_DELAY;
 		}
 
@@ -837,9 +771,7 @@ void main_loop()
 				    project.delay % 60,
 				    projlog.c_str()
 		    );
-	    }
-	    else
-	    {
+	    } else {
 #define MIN_DELAY (60)
 		// Wait a while between every polling.
 		// TODO: Tune this.

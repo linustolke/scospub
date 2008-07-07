@@ -15,24 +15,20 @@ using std::string;
 
 int assimilate_handler(
     WORKUNIT& wu, vector<RESULT>& results, RESULT& canonical_result
-)
-{
-    if (wu.error_mask && wu.canonical_resultid == 0)
-    {
+) {
+    if (wu.error_mask && wu.canonical_resultid == 0) {
         return 0;
     }
 
     SCOPE_MSG_LOG log(log_messages, SCHED_MSG_LOG::MSG_NORMAL);
 
-    if (wu.canonical_resultid)
-    {
+    if (wu.canonical_resultid) {
         vector<string> output_file_paths;
         get_output_file_paths(canonical_result, output_file_paths);
 
 	// TODO: Hardcoded count of files.
 #define COUNT_OUTPUT_FILES 2
-	if (output_file_paths.size() != COUNT_OUTPUT_FILES)
-	{
+	if (output_file_paths.size() != COUNT_OUTPUT_FILES) {
 	    log.printf("Not right count of files: %d != %d\n",
 		       output_file_paths.size(),
 		       COUNT_OUTPUT_FILES);
@@ -96,8 +92,7 @@ int assimilate_handler(
 #define SCOSDATA "../html/scospres/DATA"
 	// out1:
 	int retval = boinc_mkdir(SCOSDATA);
-	if (retval)
-	{
+	if (retval) {
 	    log.printf("Cannot create the directory %s\n", SCOSDATA);
 	    return retval;
 	}
@@ -110,8 +105,7 @@ int assimilate_handler(
 	string path = output_file_paths[0];
 	
 	retval = boinc_copy(path.c_str() , copy_path.c_str());
-	if (retval)
-	{
+	if (retval) {
 	    log.printf("Cannot copy the result file to %s.\n",
 		       copy_path.c_str());
 	    return retval;
@@ -125,11 +119,9 @@ int assimilate_handler(
 
 	std::ifstream f1(output_file_paths[1].c_str());
 
-	if (f1)
-	{
+	if (f1) {
 	    string line;
-	    while (getline(f1, line, '\n')) 
-	    {
+	    while (getline(f1, line, '\n')) {
 #define RESULT_STRING "SCOSPUB_RESULT: "
 		if (line.find(RESULT_STRING, 0) == 0) {
 		    result = atoi(line.substr(strlen(RESULT_STRING)).c_str());
@@ -153,8 +145,7 @@ int assimilate_handler(
 
 	for (std::map<const int, int>::iterator it = revisions.begin();
 	     it != revisions.end();
-	     it++)
-	{
+	     it++) {
 	    DB_SCOS_RESULT_SOURCE dsrs;
 
 	    dsrs.source = (*it).first;

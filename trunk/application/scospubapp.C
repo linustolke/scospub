@@ -73,7 +73,7 @@ class TASK {
 public:
     virtual const char * get_application() const = 0;
 
-    virtual int parse(sx_parser&) = 0;
+    virtual int parse(SX_PARSER&) = 0;
     virtual bool poll(int& status) = 0;
     virtual int run(JOB_INFO * info) = 0;
     virtual void kill() = 0;
@@ -82,7 +82,7 @@ public:
     virtual double get_current_cpu_time() = 0;
 };
 
-class processTASK : public TASK {
+class PROCESS_TASK : public TASK {
 private:
     string application;
     string command_line;
@@ -103,15 +103,15 @@ protected:
     void set_application(const char * str) { application = str; }
     void set_command_line(const char * str) { command_line = str; }
 
-    bool parse_in_out_files(sx_parser& xp, char * tag);
-    bool parse_cmd_line(sx_parser& xp, char * tag);
+    bool parse_in_out_files(SX_PARSER& xp, char * tag);
+    bool parse_cmd_line(SX_PARSER& xp, char * tag);
 
     virtual vector<string> get_processed_args(JOB_INFO * info);
 
 public:
     // From TASK
     virtual const char * get_application() const;
-    virtual int parse(sx_parser&);
+    virtual int parse(SX_PARSER&);
     virtual int run(JOB_INFO * info);
     virtual bool poll(int& status);
     virtual void kill();
@@ -121,23 +121,20 @@ public:
 };
 
 
-class javaTASK : public processTASK
-{
+class JAVA_TASK : public PROCESS_TASK {
 public:
     // From TASK
-    virtual int parse(sx_parser&);
+    virtual int parse(SX_PARSER&);
     virtual int run(JOB_INFO * info);
 };
 
 
-class source : public processTASK
-{
+class SOURCE : public PROCESS_TASK {
 private:
     string id;
 };
 
-class svn_source : public source
-{
+class SVN_SOURCE : public SOURCE {
 private:
     int id;
     string url;
@@ -147,25 +144,23 @@ private:
     int revision;
 
 public:
-    svn_source(int i) : id(i) {};
-    virtual int parse(sx_parser&);
+    SVN_SOURCE(int i) : id(i) {};
+    virtual int parse(SX_PARSER&);
     virtual int run(JOB_INFO * info);
 };
 
-class sources
-{
+class SOURCES {
 private:
-    vector<source*> sources;
+    vector<SOURCE*> sources;
 
 public:
     void push_back_all(vector<TASK*>& tasks) const;
 
-    virtual int parse(sx_parser&);
+    virtual int parse(SX_PARSER&);
 };
 
 
-class job_type : JOB_INFO
-{
+class JOB_TYPE : JOB_INFO {
 private:
     string project_name;
     int projectid;
@@ -200,15 +195,12 @@ bool app_suspended = false;
 
 
 // Parse a svn source entry
-int svn_source::parse(sx_parser& xp)
-{
+int SVN_SOURCE::parse(SX_PARSER& xp) {
     char tag[1024];
     bool is_tag;
 
-    while (!xp.get(tag, sizeof(tag), is_tag))
-    {
-        if (!is_tag)
-	{
+    while (!xp.get(tag, sizeof(tag), is_tag)) {
+        if (!is_tag) {
             fprintf(stderr,
 		    "SCHED_CONFIG::parse(): unexpected text %s in "
 		    TAG_SVN "\n",
@@ -216,8 +208,7 @@ int svn_source::parse(sx_parser& xp)
             continue;
         }
 
-	if (!strcmp(tag, "/" TAG_SVN))
-	{
+	if (!strcmp(tag, "/" TAG_SVN)) {
 	    return 0;
 	}
 	else if (xp.parse_string(tag, TAG_URL, url))
@@ -238,8 +229,7 @@ int svn_source::parse(sx_parser& xp)
 }
 
 
-int svn_source::run(JOB_INFO * info)
-{
+int SVN_SOURCE::run(JOB_INFO * info) {
     set_application("/usr/bin/svn"); // TODO: Different for different clients
 
     string command_line = "co";
@@ -265,20 +255,17 @@ int svn_source::run(JOB_INFO * info)
 
     set_command_line(command_line.c_str());
 
-    return processTASK::run(info);
+    return PROCESS_TASK::run(info);
 }
 
 
 // Parse the source
-int sources::parse(sx_parser& xp)
-{
+int SOURCES::parse(SX_PARSER& xp) {
     char tag[1024];
     bool is_tag;
 
-    while (!xp.get(tag, sizeof(tag), is_tag))
-    {
-        if (!is_tag)
-	{
+    while (!xp.get(tag, sizeof(tag), is_tag)) {
+        if (!is_tag) {
             fprintf(stderr,
 		    "SCHED_CONFIG::parse(): unexpected text %s in "
 		    TAG_SOURCE "\n",
@@ -294,7 +281,7 @@ int sources::parse(sx_parser& xp)
         }
 	else if (xp.match_tag(tag, TAG_SVN, id))
 	{
-	    svn_source * source = new svn_source(id);
+	    SVN_SOURCE * source = new SVN_SOURCE(id);
 	    int retval = source->parse(xp);
 	    if (!retval) {
 		sources.push_back(source);
@@ -317,121 +304,111 @@ int sources::parse(sx_parser& xp)
 }
 
 
-const char * processTASK::get_application() const
-{
+const char * PROCESS_TASK::get_application() const {
     return application.c_str();
 }
 
-bool processTASK::parse_in_out_files(sx_parser& xp, char * tag)
-{
-    if (xp.parse_string(tag, TAG_STDIN_FILENAME, stdin_filename))
+bool PROCESS_TASK::parse_in_out_files(SX_PARSER& xp, char * tag) {
+    if (xp.parse_string(tag, TAG_STDIN_FILENAME, stdin_filename)) {
 	return true;
-    if (xp.parse_string(tag, TAG_STDOUT_FILENAME, stdout_filename))
+    }
+    if (xp.parse_string(tag, TAG_STDOUT_FILENAME, stdout_filename)) {
 	return true;
-    if (xp.parse_string(tag, TAG_STDERR_FILENAME, stderr_filename))
+    }
+    if (xp.parse_string(tag, TAG_STDERR_FILENAME, stderr_filename)) {
 	return true;
+    }
     return false;
 }
 
-bool processTASK::parse_cmd_line(sx_parser& xp, char * tag)
-{
-    if (xp.parse_string(tag, TAG_COMMAND_LINE, command_line))
+bool PROCESS_TASK::parse_cmd_line(SX_PARSER& xp, char * tag) {
+    if (xp.parse_string(tag, TAG_COMMAND_LINE, command_line)) {
 	return true;
+    }
 
     int ie = 0;
-    if (xp.parse_int(tag, TAG_IGNORE_EXIT, ie))
-    {
+    if (xp.parse_int(tag, TAG_IGNORE_EXIT, ie)) {
 	ignore_exit = false;
-	if (ie != 0)
-	{
+	if (ie != 0) {
 	    ignore_exit = true;
 	}
 	return true;
     }
 
-    if (xp.parse_string(tag, TAG_ARGS, file_args_unprocessed))
+    if (xp.parse_string(tag, TAG_ARGS, file_args_unprocessed)) {
 	return true;
+    }
 
     return false;
 }
 
 
 // Parse a task!
-int processTASK::parse(sx_parser& xp)
-{
+int PROCESS_TASK::parse(SX_PARSER& xp) {
     char tag[1024];
     bool is_tag;
 
-    while (!xp.get(tag, sizeof(tag), is_tag))
-    {
-        if (!is_tag)
-	{
+    while (!xp.get(tag, sizeof(tag), is_tag)) {
+        if (!is_tag) {
             fprintf(stderr,
-		    "processTASK::parse(): unexpected text %s\n", tag);
+		    "PROCESS_TASK::parse(): unexpected text %s\n", tag);
             continue;
         }
-        if (!strcmp(tag, "/" TAG_TASK))
-	{
+        if (!strcmp(tag, "/" TAG_TASK)) {
             return 0;
-        }
-        else if (xp.parse_string(tag, TAG_APPLICATION, application))
+        } else if (xp.parse_string(tag, TAG_APPLICATION, application)) {
 	    continue;
-	else if (parse_in_out_files(xp, tag))
+	} else if (parse_in_out_files(xp, tag)) {
 	    continue;
-	else if (parse_cmd_line(xp, tag))
+	} else if (parse_cmd_line(xp, tag)) {
 	    continue;
+	}
 
 	fprintf(stderr,
-		"processTASK::parse(): unexpected tag %s\n", tag);
+		"PROCESS_TASK::parse(): unexpected tag %s\n", tag);
     }
     return ERR_XML_PARSE;
 }
 
 
 // Parse a java task!
-int javaTASK::parse(sx_parser& xp)
-{
+int JAVA_TASK::parse(SX_PARSER& xp) {
     char tag[1024];
     bool is_tag;
 
-    while (!xp.get(tag, sizeof(tag), is_tag))
-    {
-        if (!is_tag)
-	{
+    while (!xp.get(tag, sizeof(tag), is_tag)) {
+        if (!is_tag) {
             fprintf(stderr,
-		    "javaTASK::parse(): unexpected text %s\n", tag);
+		    "JAVA_TASK::parse(): unexpected text %s\n", tag);
             continue;
         }
 
-        if (!strcmp(tag, "/" TAG_TASK_JAVA))
-	{
+        if (!strcmp(tag, "/" TAG_TASK_JAVA)) {
             return 0;
-        }
-	else if (parse_in_out_files(xp, tag))
+        } else if (parse_in_out_files(xp, tag)) {
 	    continue;
-	else if (parse_cmd_line(xp, tag))
+	} else if (parse_cmd_line(xp, tag)) {
 	    continue;
+	}
 
 	fprintf(stderr,
-		"javaTASK::parse(): unexpected tag %s\n", tag);
+		"JAVA_TASK::parse(): unexpected tag %s\n", tag);
     }
     return ERR_XML_PARSE;
 }
 
-int javaTASK::run(JOB_INFO * info)
-{
+int JAVA_TASK::run(JOB_INFO * info) {
     // TODO: Different depending on the host type.
     set_application("/usr/bin/java");
 
-    return processTASK::run(info);
+    return PROCESS_TASK::run(info);
 }
 
 
-void sources::push_back_all(vector<TASK*>& tasks) const {
-    for (vector<source*>::const_iterator iter = sources.begin(); 
+void SOURCES::push_back_all(vector<TASK*>& tasks) const {
+    for (vector<SOURCE*>::const_iterator iter = sources.begin(); 
 	 iter != sources.end();
-	 iter++)
-    {
+	 iter++) {
 	tasks.push_back(*iter);
     }
 }
@@ -440,8 +417,8 @@ void sources::push_back_all(vector<TASK*>& tasks) const {
 
 
 // Parse a file
-// If <task> is found, it transfers control to processTASK->parse()
-int job_type::parse() {
+// If <task> is found, it transfers control to PROCESS_TASK->parse()
+int JOB_TYPE::parse() {
     MIOFILE mf;
     char tag[1024], buf[256];
     bool is_tag;
@@ -453,37 +430,32 @@ int job_type::parse() {
         return ERR_FOPEN;
     }
     mf.init_file(f);
-    sx_parser xp(&mf);
+    SX_PARSER xp(&mf);
 
-    if (!xp.parse_start(JOB_TAG))
+    if (!xp.parse_start(JOB_TAG)) {
 	return ERR_XML_PARSE;
+    }
 
-    while (!xp.get(tag, sizeof(tag), is_tag))
-    {
-        if (!is_tag)
-	{
+    while (!xp.get(tag, sizeof(tag), is_tag)) {
+        if (!is_tag) {
             fprintf(stderr,
 		    "SCHED_CONFIG::parse(): unexpected text %s\n", tag);
             continue;
         }
-        if (!strcmp(tag, "/" JOB_TAG))
-	{
+        if (!strcmp(tag, "/" JOB_TAG)) {
             return 0;
         }
 
         if (strcmp(tag, TAG_TASK) == 0
-	    || strcmp(tag, TAG_TASK_JAVA) == 0)
-	{
+	    || strcmp(tag, TAG_TASK_JAVA) == 0)	{
 	    TASK * task = NULL;
 
-            if (strcmp(tag, TAG_TASK) == 0)
-	    {
-		task = new processTASK();
+            if (strcmp(tag, TAG_TASK) == 0) {
+		task = new PROCESS_TASK();
 	    }
 
-            if (strcmp(tag, TAG_TASK_JAVA) == 0)
-	    {
-		task = new javaTASK();
+            if (strcmp(tag, TAG_TASK_JAVA) == 0) {
+		task = new JAVA_TASK();
 	    }
 
 	    if (task == NULL) {
@@ -497,33 +469,28 @@ int job_type::parse() {
 
             if (!retval) {
                 tasks.push_back(task);
-            }
-	    else
-	    {
+            } else {
 		delete(task);
 		break;
 	    }
 
 	    continue;
-        }
-	else if (xp.parse_string(tag, TAG_PROJECT, project_name, projectid))
+        } else if (xp.parse_string(tag, TAG_PROJECT,
+				   project_name, projectid)) {
 	    continue;
-	else if (xp.parse_string(tag, TAG_TEAM, team_name, teamid))
+	} else if (xp.parse_string(tag, TAG_TEAM, team_name, teamid)) {
 	    continue;
-	else if (xp.parse_string(tag, TAG_TOOL, tool, toolid))
+	} else if (xp.parse_string(tag, TAG_TOOL, tool, toolid)) {
 	    continue;
-	else if (xp.parse_string(tag, TAG_CONFIG, config))
+	} else if (xp.parse_string(tag, TAG_CONFIG, config)) {
 	    continue;
-	else if (!strcmp(tag, TAG_SOURCE))
-	{
-	    sources src;
+	} else if (!strcmp(tag, TAG_SOURCE)) {
+	    SOURCES src;
 	    int retval = src.parse(xp);
 
             if (!retval) {
                 src.push_back_all(tasks);
-            }
-	    else
-	    {
+            } else {
 		break;
 	    }
 
@@ -547,19 +514,16 @@ int job_type::parse() {
 // %r -> repository root
 //
 vector<string>
-processTASK::get_processed_args(JOB_INFO * info)
-{
+PROCESS_TASK::get_processed_args(JOB_INFO * info) {
     vector<string> res;
 
     string buf;
     std::stringstream ss(file_args_unprocessed);
 
-    while (ss >> buf)
-    {
+    while (ss >> buf) {
 #define REPOSITORY_ROOT_TOKEN "%r"
 	string::size_type loc = buf.find(REPOSITORY_ROOT_TOKEN);
-	if (loc != string::npos)
-	{
+	if (loc != string::npos) {
 	    buf.erase(loc, strlen(REPOSITORY_ROOT_TOKEN));
 	    buf.insert(loc, info->get_job_root());
 	}
@@ -619,8 +583,7 @@ HANDLE win_fopen(const char* path, const char* mode) {
 // Create a copy of the string on the heap.
 // These strings are never freed. Instead we do execv (or exit).
 static char *
-create_malloced_string(const char * str)
-{
+create_malloced_string(const char * str) {
     int len = strlen(str) + 1;
     char * mallstr = (char *) malloc(len);
     strlcpy(mallstr, str, len);
@@ -628,16 +591,13 @@ create_malloced_string(const char * str)
 }
 #endif
 
-int processTASK::run(JOB_INFO * info)
-{
-    if (application == "")
-    {
+int PROCESS_TASK::run(JOB_INFO * info) {
+    if (application == "") {
 	fprintf(stderr, "The application is not set.\n");
 	return ERR_EXEC;
     }
 
-    if (command_line == "")
-    {
+    if (command_line == "") {
 	fprintf(stderr, "The command line is not set.\n");
 	return ERR_EXEC;
     }
@@ -673,8 +633,7 @@ int processTASK::run(JOB_INFO * info)
     command = app_path + string(" ") + command_line;
     for (vector<string>::iterator iter = processed_args.begin();
 	 iter != processed_args.end();
-	 iter++)
-    {
+	 iter++) {
 	command += string(" ") + *iter;
     }
 #else
@@ -692,13 +651,11 @@ int processTASK::run(JOB_INFO * info)
     int argc = parse_command_line(arglist, argv+1);
     for (vector<string>::iterator iter = processed_args.begin();
 	 iter != processed_args.end();
-	 iter++)
-    {
+	 iter++) {
 	argv[++argc] = create_malloced_string((*iter).c_str());
     }
 
-    for (int i = 0; i <= argc; i++)
-    {
+    for (int i = 0; i <= argc; i++) {
 	fprintf(stderr, "scospubapp: with argv[%d]: %s\n", i, argv[i]);
     }
 #endif
@@ -719,8 +676,7 @@ int processTASK::run(JOB_INFO * info)
     //
 #endif
 
-    if (stdin_filename != "")
-    {
+    if (stdin_filename != "") {
 	string stdin_path;
 
 	boinc_resolve_filename_s(stdin_filename.c_str(), stdin_path);
@@ -732,8 +688,7 @@ int processTASK::run(JOB_INFO * info)
 #endif
     }
 
-    if (stdout_filename != "")
-    {
+    if (stdout_filename != "") {
 	string stdout_path;
 
 	boinc_resolve_filename_s(stdout_filename.c_str(), stdout_path);
@@ -745,8 +700,7 @@ int processTASK::run(JOB_INFO * info)
 #endif
     }
 
-    if (stderr_filename != "")
-    {
+    if (stderr_filename != "") {
 	string stderr_path;
 
         boinc_resolve_filename_s(stderr_filename.c_str(), stderr_path);
@@ -756,13 +710,12 @@ int processTASK::run(JOB_INFO * info)
 	FILE* stderr_file = freopen(stderr_path.c_str(), "w", stderr);
 	if (!stderr_file) return ERR_FOPEN;
 #endif
-    }
 #ifdef _WIN32
-    else
-    {
+    } else {
         startup_info.hStdError = win_fopen(STDERR_FILE, "a");
-    }
 #endif
+    }
+
              
     // Create the process
 #ifdef _WIN32
@@ -777,8 +730,7 @@ int processTASK::run(JOB_INFO * info)
 	    NULL,
 	    &startup_info,
 	    &process_info
-	    ))
-    {
+	    )) {
         return ERR_EXEC;
     }
     pid_handle = process_info.hProcess;
@@ -796,7 +748,7 @@ int processTASK::run(JOB_INFO * info)
 // Returns true if the process has exited, otherwise false.
 // status == 0 means proceed.
 // status != 0 means serious error in the application.
-bool processTASK::poll(int& status) {
+bool PROCESS_TASK::poll(int& status) {
 #ifdef _WIN32
     unsigned long exit_code;
     if (GetExitCodeProcess(pid_handle, &exit_code)) {
@@ -805,8 +757,7 @@ bool processTASK::poll(int& status) {
             status = exit_code;
             final_cpu_time = get_current_cpu_time();
 
-	    if (ignore_exit)
-	    {
+	    if (ignore_exit) {
 		status = 0;
 	    }
 
@@ -839,8 +790,7 @@ bool processTASK::poll(int& status) {
 	    fprintf(stderr, "app exited with unknown status 0x%x", status);
 	}
 
-	if (ignore_exit)
-	{
+	if (ignore_exit) {
 	    fprintf(stderr, " (ignored)");
 	    status = 0;
 	}
@@ -852,7 +802,7 @@ bool processTASK::poll(int& status) {
     return false;
 }
 
-void processTASK::kill() {
+void PROCESS_TASK::kill() {
 #ifdef _WIN32
     TerminateProcess(pid_handle, -1);
 #else
@@ -860,7 +810,7 @@ void processTASK::kill() {
 #endif
 }
 
-void processTASK::stop() {
+void PROCESS_TASK::stop() {
 #ifdef _WIN32
     SuspendThread(thread_handle);
 #else
@@ -868,7 +818,7 @@ void processTASK::stop() {
 #endif
 }
 
-void processTASK::resume() {
+void PROCESS_TASK::resume() {
 #ifdef _WIN32
     ResumeThread(thread_handle);
 #else
@@ -905,7 +855,7 @@ void poll_boinc_messages(TASK& task) {
     }
 }
 
-double processTASK::get_current_cpu_time() {
+double PROCESS_TASK::get_current_cpu_time() {
 #ifdef _WIN32
     FILETIME creation_time, exit_time, kernel_time, user_time;
     ULARGE_INTEGER tKernel, tUser;
@@ -970,7 +920,7 @@ void read_checkpoint(int& ntasks, double& cpu, int& attempts) {
 
 int main(int argc, char** argv) {
     BOINC_OPTIONS options;
-    job_type job;
+    JOB_TYPE job;
 
     memset(&options, 0, sizeof(options));
     options.main_program = true;
@@ -989,8 +939,7 @@ int main(int argc, char** argv) {
     job.run();
 }
 
-void job_type::run()
-{
+void JOB_TYPE::run() {
     int attempts;
 
     read_checkpoint(ntasks, cpu, attempts);
