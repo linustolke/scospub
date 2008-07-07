@@ -26,14 +26,13 @@
 
 #define MATCH_ID_START " id='"
 
-sx_parser::sx_parser(MIOFILE* f)
-    : XML_PARSER(f)
-{
+SX_PARSER::SX_PARSER(MIOFILE* f)
+    : XML_PARSER(f) {
 }
 
 
 bool
-sx_parser::parse_string(const char * parsed_tag, const char * st,
+SX_PARSER::parse_string(const char * parsed_tag, const char * st,
 			std::string& str) {
     char tag[256];
     strcpy(tag, parsed_tag);
@@ -47,22 +46,19 @@ sx_parser::parse_string(const char * parsed_tag, const char * st,
 // and return true.
 //
 bool
-sx_parser::parse_str(const char* parsed_tag, const char* start_tag,
+SX_PARSER::parse_str(const char* parsed_tag, const char* start_tag,
 		     int& id,
-		     char* buf, int len)
-{
+		     char* buf, int len) {
     bool is_tag, eof;
     char end_tag[256], tag[256], tmp[64000];
 
     bool is_end_tag;
 
-    if (!match_tag(parsed_tag, start_tag, id, is_end_tag, buf))
-    {
+    if (!match_tag(parsed_tag, start_tag, id, is_end_tag, buf)) {
 	return false;
     }
 
-    if (is_end_tag)
-    {
+    if (is_end_tag) {
 	return true;
     }
 
@@ -95,9 +91,8 @@ sx_parser::parse_str(const char* parsed_tag, const char* start_tag,
 
 
 bool
-sx_parser::parse_string(const char * parsed_tag, const char * start_tag,
-			std::string& str, int& id)
-{
+SX_PARSER::parse_string(const char * parsed_tag, const char * start_tag,
+			std::string& str, int& id) {
     char buf[8192];
     bool flag = parse_str(parsed_tag, start_tag, id, buf, sizeof(buf));
     if (!flag) return false;
@@ -106,7 +101,7 @@ sx_parser::parse_string(const char * parsed_tag, const char * start_tag,
 }
 
 bool
-sx_parser::match_tag(const char * parsed, const char * start_tag,
+SX_PARSER::match_tag(const char * parsed, const char * start_tag,
 		     int& id) {
     bool dont_care;
     return match_tag(parsed, start_tag, id, dont_care, NULL);
@@ -115,38 +110,31 @@ sx_parser::match_tag(const char * parsed, const char * start_tag,
 //
 // Match a tag either with or wihtout id argument
 bool
-sx_parser::match_tag(const char * parsed, const char * start_tag,
+SX_PARSER::match_tag(const char * parsed, const char * start_tag,
 		     int& id,
 		     bool& is_end_tag,
-		     char * buf)
-{
-    if (strncmp(parsed, start_tag, strlen(start_tag)) != 0)
-    {
+		     char * buf) {
+    if (strncmp(parsed, start_tag, strlen(start_tag)) != 0) {
 	return false;
     }
 
     id = 0;
     is_end_tag = false;
-    switch (parsed[strlen(start_tag)])
-    {
+    switch (parsed[strlen(start_tag)]) {
     case 0:
 	break;
-    case ' ':
-    {
+    case ' ': {
 	// There is an argument
 	const char * args = parsed + strlen(start_tag);
 
-	if (strncmp(args, MATCH_ID_START, strlen(MATCH_ID_START)) != 0)
-	{
+	if (strncmp(args, MATCH_ID_START, strlen(MATCH_ID_START)) != 0) {
 	    const char * idarg = args + strlen(MATCH_ID_START);
 	    id = atoi(idarg);
 
-	    if (args[strlen(args) - 1] == '/')
-	    {
+	    if (args[strlen(args) - 1] == '/') {
 		// The tag has the form <tag id='NN'/>
 		is_end_tag = true;
-		if (buf != NULL)
-		{
+		if (buf != NULL) {
 		    strcpy(buf, "");
 		}
 		return true;
@@ -158,8 +146,7 @@ sx_parser::match_tag(const char * parsed, const char * start_tag,
     case '/':
 	// handle the form <tag/>
 	is_end_tag = true;
-	if (buf != NULL)
-	{
+	if (buf != NULL) {
 	    strcpy(buf, "");
 	}
         return true;

@@ -48,8 +48,7 @@ int DB_SCOS_RESULT::get_id() {return id;}
 int DB_SCOS_RESULT_SOURCE::get_id() {return 0;}
 
 // db_print method for the scos_project table
-void DB_SCOS_PROJECT::db_print(char* buf)
-{
+void DB_SCOS_PROJECT::db_print(char* buf) {
     char name2[2 * sizeof name];
 
     safe_strcpy(name2, name);
@@ -69,8 +68,7 @@ void DB_SCOS_PROJECT::db_print(char* buf)
 }
 
 // db_parse method for the scos_project table
-void DB_SCOS_PROJECT::db_parse(MYSQL_ROW& r)
-{
+void DB_SCOS_PROJECT::db_parse(MYSQL_ROW& r) {
     int i = 0;
     clear();
     id = atoi(r[i++]);
@@ -82,8 +80,7 @@ void DB_SCOS_PROJECT::db_parse(MYSQL_ROW& r)
 }
 
 // db_print method for the scos_source table
-void DB_SCOS_SOURCE::db_print(char * buf)
-{
+void DB_SCOS_SOURCE::db_print(char * buf) {
     char reldir2[2 * sizeof reldir];
     char url2[2 * sizeof url];
     char username2[2 * sizeof username];
@@ -136,8 +133,7 @@ void DB_SCOS_SOURCE::db_print(char * buf)
 
 
 // db_parse method for the scos_source table
-void DB_SCOS_SOURCE::db_parse(MYSQL_ROW& r)
-{
+void DB_SCOS_SOURCE::db_parse(MYSQL_ROW& r) {
     int i = 0;
     clear();
     id = atoi(r[i++]);
@@ -156,8 +152,7 @@ void DB_SCOS_SOURCE::db_parse(MYSQL_ROW& r)
 
 
 // db_print method for the scos_tool table
-void DB_SCOS_TOOL::db_print(char* buf)
-{
+void DB_SCOS_TOOL::db_print(char* buf) {
     char name2[2 * sizeof name];
     char config2[2 * sizeof config];
     
@@ -180,8 +175,7 @@ void DB_SCOS_TOOL::db_print(char* buf)
 }
 
 // db_parse method for the scos_tool table
-void DB_SCOS_TOOL::db_parse(MYSQL_ROW& r)
-{
+void DB_SCOS_TOOL::db_parse(MYSQL_ROW& r) {
     int i = 0;
     clear();
     id = atoi(r[i++]);
@@ -192,8 +186,7 @@ void DB_SCOS_TOOL::db_parse(MYSQL_ROW& r)
 }
 
 // db_print method for the scos_result table
-void DB_SCOS_RESULT::db_print(char* buf)
-{
+void DB_SCOS_RESULT::db_print(char* buf) {
     char file2[2 * sizeof file];
 
     safe_strcpy(file2, file);
@@ -214,8 +207,7 @@ void DB_SCOS_RESULT::db_print(char* buf)
 }
 
 // db_parse method for the scos_result table
-void DB_SCOS_RESULT::db_parse(MYSQL_ROW& r)
-{
+void DB_SCOS_RESULT::db_parse(MYSQL_ROW& r) {
     int i = 0;
     clear();
     id = atoi(r[i++]);
@@ -227,8 +219,7 @@ void DB_SCOS_RESULT::db_parse(MYSQL_ROW& r)
 
 
 // db_print method for the scos_result table
-void DB_SCOS_RESULT_SOURCE::db_print(char* buf)
-{
+void DB_SCOS_RESULT_SOURCE::db_print(char* buf) {
     sprintf(buf,
 	    "source=%d, "
 	    "result=%d, "
@@ -240,8 +231,7 @@ void DB_SCOS_RESULT_SOURCE::db_print(char* buf)
 }
 
 // db_parse method for the scos_result table
-void DB_SCOS_RESULT_SOURCE::db_parse(MYSQL_ROW& r)
-{
+void DB_SCOS_RESULT_SOURCE::db_parse(MYSQL_ROW& r) {
     int i = 0;
     clear();
     source = atoi(r[i++]);
