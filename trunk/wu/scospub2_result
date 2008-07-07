@@ -2,14 +2,14 @@
     <name><OUTFILE_0/></name>
     <generated_locally/>
     <upload_when_present/>
-    <max_nbytes>5000000</max_nbytes>
+    <max_nbytes>50000000</max_nbytes>
     <url><UPLOAD_URL/></url>
 </file_info>
 <file_info>
     <name><OUTFILE_1/></name>
     <generated_locally/>
     <upload_when_present/>
-    <max_nbytes>5000000</max_nbytes>
+    <max_nbytes>50000</max_nbytes>
     <url><UPLOAD_URL/></url>
 </file_info>
 <result>
