@@ -681,14 +681,6 @@ int processTASK::run(JOB_INFO * info)
     char * buf = create_malloced_string(app_path.c_str());
     fprintf(stderr,
 	    "scospubapp: running %s %s\n", buf, command_line.c_str());
-
-    for (vector<string>::iterator iter = processed_args.begin();
-	 iter != processed_args.end();
-	 iter++)
-    {
-	fprintf(stderr, "scospubapp: with argument: %s\n", (*iter).c_str());
-    }
-
     fflush(stderr);
 
     // construct argv
@@ -702,7 +694,12 @@ int processTASK::run(JOB_INFO * info)
 	 iter != processed_args.end();
 	 iter++)
     {
-	argv[argc++] = create_malloced_string((*iter).c_str());
+	argv[++argc] = create_malloced_string((*iter).c_str());
+    }
+
+    for (int i = 0; i <= argc; i++)
+    {
+	fprintf(stderr, "scospubapp: with argv[%d]: %s\n", i, argv[i]);
     }
 #endif
 
@@ -720,46 +717,52 @@ int processTASK::run(JOB_INFO * info)
     // The logging above is done before redirecting stderr
     // to end up on the scospubapp stderr.
     //
-    FILE* stdout_file;
-    FILE* stdin_file;
-    FILE* stderr_file;
-
 #endif
-    if (stdout_filename != "") {
-	string stdout_path;
 
-	boinc_resolve_filename_s(stdout_filename.c_str(), stdout_path);
-#ifdef _WIN32
-	startup_info.hStdOutput = win_fopen(stdout_path.c_str(), "w");
-#else
-	stdout_file = freopen(stdout_path.c_str(), "w", stdout);
-	if (!stdout_file) return ERR_FOPEN;
-#endif
-    }
-    if (stdin_filename != "") {
+    if (stdin_filename != "")
+    {
 	string stdin_path;
 
 	boinc_resolve_filename_s(stdin_filename.c_str(), stdin_path);
 #ifdef _WIN32
 	startup_info.hStdInput = win_fopen(stdin_path.c_str(), "r");
 #else
-	stdin_file = freopen(stdin_path.c_str(), "r", stdin);
+	FILE* stdin_file = freopen(stdin_path.c_str(), "r", stdin);
 	if (!stdin_file) return ERR_FOPEN;
 #endif
     }
-    if (stderr_filename != "") {
+
+    if (stdout_filename != "")
+    {
+	string stdout_path;
+
+	boinc_resolve_filename_s(stdout_filename.c_str(), stdout_path);
+#ifdef _WIN32
+	startup_info.hStdOutput = win_fopen(stdout_path.c_str(), "w");
+#else
+	FILE* stdout_file = freopen(stdout_path.c_str(), "w", stdout);
+	if (!stdout_file) return ERR_FOPEN;
+#endif
+    }
+
+    if (stderr_filename != "")
+    {
 	string stderr_path;
 
         boinc_resolve_filename_s(stderr_filename.c_str(), stderr_path);
 #ifdef _WIN32
         startup_info.hStdError = win_fopen(stderr_path.c_str(), "w");
-    } else {
-        startup_info.hStdError = win_fopen(STDERR_FILE, "a");
 #else
-	stderr_file = freopen(stderr_path.c_str(), "w", stderr);
+	FILE* stderr_file = freopen(stderr_path.c_str(), "w", stderr);
 	if (!stderr_file) return ERR_FOPEN;
 #endif
     }
+#ifdef _WIN32
+    else
+    {
+        startup_info.hStdError = win_fopen(STDERR_FILE, "a");
+    }
+#endif
              
     // Create the process
 #ifdef _WIN32
@@ -774,7 +777,8 @@ int processTASK::run(JOB_INFO * info)
 	    NULL,
 	    &startup_info,
 	    &process_info
-	    )) {
+	    ))
+    {
         return ERR_EXEC;
     }
     pid_handle = process_info.hProcess;
