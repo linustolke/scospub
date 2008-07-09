@@ -270,10 +270,6 @@ SVN_RESULT::SVN_RESULT(const char * url,
     successful = false;
     last_revision = -1;
 
-    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-			"Polling %s\n",
-			url);
-
     char tempfile[100];
     strcpy(tempfile, "/tmp/scospubWG.XXXXXX");
 
@@ -296,6 +292,10 @@ SVN_RESULT::SVN_RESULT(const char * url,
     commandline.append("' 2>&1");
     commandline.append(" </dev/null");
 
+    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
+			"Fetching svn data from %s\n",
+			url);
+
     int result = system(commandline.c_str());
 
     if (result != 0) {
@@ -309,10 +309,6 @@ SVN_RESULT::SVN_RESULT(const char * url,
 	unlink(filename);
 	return;
     }
-
-    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-			"Fetching svn data from %s done\n",
-			url);
 
     // Parse through the result
     string line;
