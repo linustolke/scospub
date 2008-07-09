@@ -47,6 +47,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <time.h>
 #include <string>
 #include <fstream>
@@ -388,13 +389,13 @@ SVN_RESULT::SVN_RESULT(const char * url,
 
 //
 // Process new SVN URLs
-void
+int
 process_svn_urls() {
     static time_t last = time(NULL);
 
     // Don't do this more often than every three seconds.
     if (last + 3 > time(NULL)) {
-	return;
+	return 0;
     }
 
     time(&last);
@@ -416,6 +417,8 @@ process_svn_urls() {
 	source.update();
     }
     source.end_enumerate();
+
+    return 0;
 }
 
 
@@ -588,20 +591,38 @@ int make_job(const SCOS_PROJECT project,
 }
 
 
-void main_loop() {
+int main_loop() {
     int retval;
 
     // perpetually
     while (1) {
 	DB_SCOS_PROJECT project;
 
-	while (!project.enumerate(
-		   "WHERE active = TRUE AND NOW() > nextpoll")) {
-	    process_svn_urls();
+	const char * project_clause =
+	    "WHERE active = TRUE AND NOW() > nextpoll";
+
+	int waiting_projects;
+	retval = project.count(waiting_projects, project_clause);
+	if (retval) return retval;
+
+	if (waiting_projects > 10) {
+	    log_messages.printf(SCHED_MSG_LOG::MSG_NORMAL,
+				"There are %d projects waiting.\n",
+				waiting_projects);
+	} else if (waiting_projects > 3) {
+	    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
+				"There are %d projects waiting.\n",
+				waiting_projects);
+	}
+
+	while (!project.enumerate(project_clause)) {
+	    retval = process_svn_urls();
+	    if (retval) return retval;
 
 	    DB_TEAM team;
 
-	    team.lookup_id(project.team);
+	    retval = team.lookup_id(project.team);
+	    if (retval) return retval;
 
 	    string projlog = "";
 	    projlog += "project ";
@@ -751,13 +772,18 @@ void main_loop() {
 	    } else if (not_changed_in > 24 * 3600) {
 		// If it was a long time since this project was updated
 		// don't immediately poll it again.
-		// For every minute above the 24 hours, delay two extra
-		// seconds (a factor 30).
-		// 25 hours will cause a poll delay of two minutes.
-		project.delay = (not_changed_in - 24 * 3600) / 30;
+		// 25 hours will cause a poll delay around two minutes.
+		// This is exponentially decreasing with a max delay of
+		// almost two hours.
+		// We never delay more than 2 hour
+#define MAX_DELAY (7200)
+#define FACTOR (5000000.0)
+		double del = not_changed_in - 24 * 3600;
+		if (del < 0.0) del = 0.0;
 
-		// We never delay more than 1 hour
-#define MAX_DELAY (3600)
+		project.delay = (int) trunc(((double) MAX_DELAY)
+					    * (1 - exp(- del / FACTOR)));
+
 		if (project.delay > MAX_DELAY) {
 		    project.delay = MAX_DELAY;
 		}
@@ -781,7 +807,8 @@ void main_loop() {
 	    project.update();
 	}
 
-	process_svn_urls();
+	retval = process_svn_urls();
+	if (retval) return retval;
 	sleep(10);
     }
 }
@@ -823,5 +850,9 @@ int main(int argc, char** argv) {
 
     log_messages.printf(SCHED_MSG_LOG::MSG_NORMAL, "Starting\n");
 
-    main_loop();
+    retval = main_loop();
+    if (retval) {
+	log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
+			    "Exiting on error.\n");
+    }
 }
