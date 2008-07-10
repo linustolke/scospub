@@ -7,33 +7,91 @@
   # Create a user for this (_scospub_)
   # Change directory to a build directory in the user home directory
 {{{
-su scospub
-cd
-mkdir svn
-cd svn
+$ su scospub
+$ cd
+$ mkdir svn
+$ cd svn
+$ 
 }}}
   # Check out the boinc projects:
 {{{
-svn co http://boinc.berkeley.edu/svn/trunk/boinc boinc
-svn co http://boinc.berkeley.edu/svn/trunk/boinc boinc_samples
+$ svn co http://boinc.berkeley.edu/svn/trunk/boinc boinc
+$ svn co http://boinc.berkeley.edu/svn/trunk/boinc boinc_samples
+$ 
 }}}
   # Build the boinc project, see http://boinc.berkeley.edu/trac/wiki/BuildSystem
   # Check out this project:
 {{{
-svn co http://scospub.googlecode.com/svn/trunk scospub
+$ svn co http://scospub.googlecode.com/svn/trunk scospub
 }}}
   # Configure the project:
 {{{
-cd scospub
-_autosetup
+$ cd scospub
+$ ./_autosetup
+$ 
 }}}
   # Install the boinc server part see http://boinc.berkeley.edu/trac/wiki/MakeProject
   # Configure the project:
 {{{
-./configure -C --with-boinc=`pwd`/../boinc --with-project=/where/you/installed/the/boinc/server/project
-make
-make install
+$ ./configure -C --with-boinc=`pwd`/../boinc --with-project=/where/you/installed/the/boinc/server/project
+$ make
+$ make install
+$ 
 }}}
+  # Add paths to the Apache web server configuration and restart the server.
+{{{
+As root:
+# cp htmp/scospub.httpd.conf /etc/apache2/sites-available
+# ln -s /etc/apache2/sites-available/scospub.httpd.conf /etc/apache2/sites-enabled/400-scospub
+# apache2ctl restart
+# 
+}}}
+  # Add scospubapp as an application in /where/you/installed/the/boinc/server/project/project.xml
+{{{
+  ...
+  <app>
+    <name>scospubapp</name>
+    <user_friendly_name>The SCOSPUB Application</user_friendly_name>
+  </app>
+  ...
+</boinc>
+}}}
+  # Add work generator, validator and assimilator as daemons in /where/you/installed/the/boinc/server/project/config.xml
+{{{
+  ...
+  <daemons>
+    ...
+    <daemon>
+      <cmd>
+        scospub_work_generator
+      </cmd>
+    </daemon>
+    <daemon>
+      <cmd>
+        sample_bitwise_validator -app scospubapp
+      </cmd>
+    </daemon>
+    <daemon>
+      <cmd>
+        scospub_assimilator -app scospubapp
+      </cmd>
+    </daemon>
+    ...
+  </daemons>
+  ...
+</boinc>
+}}}
+  # Activate the application and servers.
+{{{
+$ cd /where/you/installed/the/boinc/server/project/
+$ bin/xadd
+$ bin/update_versions
+<answer yes!>
+$ bin/stop
+$ bin/start
+$ 
+}}}
+
 
 = Prerequisites =
 
