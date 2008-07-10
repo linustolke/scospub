@@ -4,7 +4,6 @@ require_once("../inc/db.inc");
 require_once("../inc/util.inc");
 require_once("../inc/translation.inc");
 
-init_session();
 db_init();
 
 $projid=$_REQUEST["project"];
