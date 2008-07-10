@@ -748,9 +748,16 @@ int main_loop() {
 		    source.end_enumerate();
 		}
 
+		int outstanding_wus;
+		retval = count_workunits(outstanding_wus,
+					 "WHERE canonical_resultid = 0 "
+					 "AND error_mask = 0");
+		if (retval) return retval;
+
 		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-				    "Processing %s done.\n",
-				    projlog.c_str()
+				    "Processing %s done. Outstanding WUs: %d.\n",
+				    projlog.c_str(),
+				    outstanding_wus
 		    );
 	    } else {
 		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
