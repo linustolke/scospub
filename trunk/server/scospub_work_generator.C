@@ -301,7 +301,7 @@ SVN_RESULT::SVN_RESULT(const char * url,
     if (result != 0) {
 	log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL,
 			    "Cannot fetch data from %s. "
-			    "Error %d\n",
+			    "Error %d.\n",
 			    url,
 			    result
 	    );
@@ -770,7 +770,7 @@ int main_loop() {
 	    // Start putting off after 24 hours
 	    if (not_changed_in == NO_TIME_GOTTEN) {
 		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-				    "No source was configured for %s.\n",
+				    "No source was accessible for %s.\n",
 				    projlog.c_str());
 	    } else if (not_changed_in > 24 * 3600) {
 		// If it was a long time since this project was updated
@@ -794,11 +794,15 @@ int main_loop() {
 		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
 				    "Delaying next processing "
 				    "for %02d:%02d:%02d "
-				    "for %s.\n",
+				    "for %s. "
+				    "Youngest source was "
+				    "%d days and %d hours.\n",
 				    project.delay / 3600,
 				    (project.delay / 60) % 60,
 				    project.delay % 60,
-				    projlog.c_str()
+				    projlog.c_str(),
+				    not_changed_in / 3600 / 24,
+				    (not_changed_in / 3600) % 24
 		    );
 	    } else {
 #define MIN_DELAY (60)
