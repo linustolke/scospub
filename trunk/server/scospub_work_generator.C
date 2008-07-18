@@ -767,7 +767,12 @@ int main_loop() {
 		    );
 	    }
 
-	    // Start putting off after 24 hours
+	    // Wait a while between every polling.
+	    // TODO: Tune this.
+#define MIN_DELAY (60)
+	    project.delay = MIN_DELAY;
+
+	    // Wait longer if the repository hasn't been recently updated
 	    if (not_changed_in == NO_TIME_GOTTEN) {
 		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
 				    "No source was accessible for %s.\n",
@@ -782,33 +787,30 @@ int main_loop() {
 #define MAX_DELAY (7200)
 #define FACTOR (5000000.0)
 		double del = not_changed_in - 24 * 3600;
-		if (del < 0.0) del = 0.0;
 
-		project.delay = (int) trunc(((double) MAX_DELAY)
+		int new_delay = (int) trunc(((double) MAX_DELAY)
 					    * (1 - exp(- del / FACTOR)));
 
-		if (project.delay > MAX_DELAY) {
-		    project.delay = MAX_DELAY;
+		if (new_delay > MAX_DELAY) {
+		    new_delay = MAX_DELAY;
 		}
 
-		log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
-				    "Delaying next processing "
-				    "for %02d:%02d:%02d "
-				    "for %s. "
-				    "Youngest source was "
-				    "%d days and %d hours.\n",
-				    project.delay / 3600,
-				    (project.delay / 60) % 60,
-				    project.delay % 60,
-				    projlog.c_str(),
-				    not_changed_in / 3600 / 24,
-				    (not_changed_in / 3600) % 24
-		    );
-	    } else {
-#define MIN_DELAY (60)
-		// Wait a while between every polling.
-		// TODO: Tune this.
-		project.delay = MIN_DELAY;
+		if (new_delay > MIN_DELAY) {
+		    project.delay = new_delay;
+		    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
+					"Delaying next processing "
+					"for %02d:%02d:%02d "
+					"for %s.\n"
+					"Youngest source was "
+					"%d days and %d hours.\n",
+					new_delay / 3600,
+					(new_delay / 60) % 60,
+					new_delay % 60,
+					projlog.c_str(),
+					not_changed_in / 3600 / 24,
+					(not_changed_in / 3600) % 24
+					);
+		}
 	    }
 
 	    project.update();
