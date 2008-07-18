@@ -800,7 +800,7 @@ int main_loop() {
 		    log_messages.printf(SCHED_MSG_LOG::MSG_DEBUG,
 					"Delaying next processing "
 					"for %02d:%02d:%02d "
-					"for %s.\n"
+					"for %s. "
 					"Youngest source was "
 					"%d days and %d hours.\n",
 					new_delay / 3600,
