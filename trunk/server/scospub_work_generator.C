@@ -67,6 +67,7 @@
 
 #include "scospub_db.h"
 #include "scospub_xml_tags.h"
+#include "sp_log_time_cond.h"
 
 #define REPLICATION_FACTOR 1
 #define MAX_LINE_LENGTH 500
@@ -296,6 +297,8 @@ SVN_RESULT::SVN_RESULT(const char * url,
 			"Fetching svn data from %s\n",
 			url);
 
+    SP_LOG_TIME_COND time_for_system(log_messages);
+
     int result = system(commandline.c_str());
 
     if (result != 0) {
@@ -309,6 +312,10 @@ SVN_RESULT::SVN_RESULT(const char * url,
 	unlink(filename);
 	return;
     }
+
+    time_for_system.printf(SCHED_MSG_LOG::MSG_NORMAL, 60,
+			   "system(%s) took too long.\n", 
+			   commandline.c_str());
 
     // Parse through the result
     string line;
@@ -575,6 +582,8 @@ int make_job(const SCOS_PROJECT project,
 
     // Register the job with BOINC
     //
+    SP_LOG_TIME_COND time_for_create_work(log_messages);
+
     create_work(
         wu,
         tooldp->get_wu_template(),
@@ -584,6 +593,9 @@ int make_job(const SCOS_PROJECT project,
         num_infiles,
         config
     );
+
+    time_for_create_work.printf(SCHED_MSG_LOG::MSG_NORMAL, 5,
+				"create_work() took too long.\n");
 }
 
 
@@ -842,6 +854,7 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
+    SP_LOG_TIME_COND time_db_open(log_messages);
     retval = boinc_db.open(
         config.db_name, config.db_host, config.db_user, config.db_passwd
     );
@@ -849,6 +862,9 @@ int main(int argc, char** argv) {
         log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL, "can't open db\n");
         exit(1);
     }
+    time_db_open.printf(SCHED_MSG_LOG::MSG_NORMAL, 60,
+			"Opening the database took too long.\n");
+
     // TODO: Hardcoded!
     if (app.lookup("where name='scospubapp'")) {
         log_messages.printf(SCHED_MSG_LOG::MSG_CRITICAL, "can't find app\n");
