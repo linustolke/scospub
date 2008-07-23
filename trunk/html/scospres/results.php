@@ -56,10 +56,13 @@ if (!$projid) {
 		. 'scos_result.date AS date, '
 		. 'scos_result.result AS result, '
 		. 'scos_result.file AS file '
-		. 'FROM scos_tool, scos_result '
-		. 'WHERE scos_tool.id = scos_result.tool '
-		. "AND project = $proj->id "
-		. 'ORDER BY scos_tool.name ');
+		. 'FROM scos_tool, scos_result, scos_result_source '
+		. "WHERE project = $proj->id "
+		. 'AND scos_tool.id = scos_result.tool '
+		. 'AND scos_result.id = scos_result_source.result '
+		. 'GROUP BY scos_result.id '
+		. 'ORDER BY scos_tool.name, sum(scos_result_source.revision) '
+		); // TODO: hardcoded for SVN
 	while ($res = mysql_fetch_object($r2)) {
 	    if ($xml) {
                 echo "  <result>\n";
