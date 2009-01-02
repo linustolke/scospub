@@ -13,14 +13,20 @@ $ mkdir svn
 $ cd svn
 $ 
 }}}
-  # Check out the boinc projects:
+  # Check out the boinc server project (according to http://boinc.berkeley.edu/trac/wiki/SourceCode):
 {{{
-$ svn co http://boinc.berkeley.edu/svn/trunk/boinc boinc
-$ svn co http://boinc.berkeley.edu/svn/trunk/boinc boinc_samples
+$ svn co http://boinc.berkeley.edu/svn/branches/server_stable boinc
 $ 
 }}}
   # Build the boinc project, see http://boinc.berkeley.edu/trac/wiki/BuildSystem
-  # Check out this project:
+  # Install the boinc server part see http://boinc.berkeley.edu/trac/wiki/MakeProject
+{{{
+$ cd boinc
+$ ./_autosetup
+$ ./configure -C --disable-client
+$ make
+$ 
+  # Check out the SCOSPUB software:
 {{{
 $ svn co http://scospub.googlecode.com/svn/trunk scospub
 }}}
@@ -28,11 +34,6 @@ $ svn co http://scospub.googlecode.com/svn/trunk scospub
 {{{
 $ cd scospub
 $ ./_autosetup
-$ 
-}}}
-  # Install the boinc server part see http://boinc.berkeley.edu/trac/wiki/MakeProject
-  # Configure the project:
-{{{
 $ ./configure -C --with-boinc=`pwd`/../boinc --with-project=/where/you/installed/the/boinc/server/project
 $ make
 $ make install
