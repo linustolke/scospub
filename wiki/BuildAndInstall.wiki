@@ -26,6 +26,7 @@ $ ./_autosetup
 $ ./configure -C --disable-client
 $ make
 $ 
+}}}
   # Check out the SCOSPUB software:
 {{{
 $ svn co http://scospub.googlecode.com/svn/trunk scospub
