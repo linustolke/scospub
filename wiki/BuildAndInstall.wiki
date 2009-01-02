@@ -19,7 +19,6 @@ $ svn co http://boinc.berkeley.edu/svn/branches/server_stable boinc
 $ 
 }}}
   # Build the boinc project, see http://boinc.berkeley.edu/trac/wiki/BuildSystem
-  # Install the boinc server part see http://boinc.berkeley.edu/trac/wiki/MakeProject
 {{{
 $ cd boinc
 $ ./_autosetup
@@ -27,9 +26,17 @@ $ ./configure -C --disable-client
 $ make
 $ 
 }}}
+  # Install the boinc server part see http://boinc.berkeley.edu/trac/wiki/MakeProject
+{{{
+$ cd tools
+$ ./make_project my-scospub-installation
+$ cd ../..
+$ 
+}}}
   # Check out the SCOSPUB software:
 {{{
 $ svn co http://scospub.googlecode.com/svn/trunk scospub
+$ 
 }}}
   # Configure the project:
 {{{
@@ -40,6 +47,7 @@ $ make
 $ make install
 $ 
 }}}
+    Your server project is by default in $HOME/projects/my-scospub-installation.
   # Add paths to the Apache web server configuration and restart the server.
 {{{
 As root:
