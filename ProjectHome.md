@@ -1,0 +1,3 @@
+The purpose of this project is to develop the software used to set up a BOINC server that provide static checks for open source projects. Unless (or until) some performance issues are a problem, only one such installation is enough worldwide.
+
+This project will also contain a lot of integration code to let any available static check tool be used by the set up. It will not provide any static checks as such by itself.
